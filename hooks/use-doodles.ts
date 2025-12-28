@@ -1,12 +1,13 @@
 "use client"
 
 import * as React from "react"
-import { DOODLES, ICONS, GROUPED_ICONS, CANDY_ICONS, ILLUSTRATIONS, type Doodle, type GroupedIcon } from "@/lib/data"
+import { ICONS, GROUPED_ICONS, CANDY_ICONS, ILLUSTRATIONS, type Doodle, type GroupedIcon } from "@/lib/data"
 
 export function useDoodles(): {
   doodles: Doodle[]
   allDoodles: Doodle[]
   categories: string[]
+  doodleSubcategories: string[]
   styles: string[]
   icons: Doodle[]
   groupedIcons: GroupedIcon[]
@@ -22,25 +23,56 @@ export function useDoodles(): {
 } {
   const [loading, setLoading] = React.useState(true)
 
-  const categories = React.useMemo(() => {
-    return Array.from(new Set(DOODLES.map((d) => d.category))).sort()
-  }, [])
+  // We'll load DOODLES lazily (they contain full SVG strings & are large)
+  const [allDoodles, setAllDoodles] = React.useState<Doodle[]>([])
+  const [categories, setCategories] = React.useState<string[]>([])
+  const [styles, setStyles] = React.useState<string[]>([])
+  const [uniqueDoodles, setUniqueDoodles] = React.useState<Doodle[]>([])
+  const [doodleSubcategories, setDoodleSubcategories] = React.useState<string[]>([])
 
-  const styles = React.useMemo(() => {
-    return Array.from(new Set(DOODLES.map((d) => d.style)))
-  }, [])
+  // Load DOODLES asynchronously to avoid bundling them into the initial client chunk
+  React.useEffect(() => {
+    let mounted = true
+    const start = Date.now()
 
-  // To match user's request: Display doodles as "unique" items on main page
-  // The style switching happens INSIDE the card/modal
-  const uniqueDoodles = React.useMemo(() => {
-    const map = new Map<string, Doodle>()
-    DOODLES.forEach((d) => {
-      const key = `${d.id}-${d.category}`
-      if (!map.has(key) || d.style === "LINED") {
-        map.set(key, d)
+    const load = async () => {
+      try {
+        const mod = await import("@/lib/data")
+        if (!mounted) return
+        const DOODLES = (mod.DOODLES || []) as Doodle[]
+
+        setAllDoodles(DOODLES)
+
+        setCategories(Array.from(new Set(DOODLES.map((d) => d.category))).sort())
+        setStyles(Array.from(new Set(DOODLES.map((d) => d.style))))
+
+        const map = new Map<string, Doodle>()
+        DOODLES.forEach((d) => {
+          const key = `${d.id}-${d.subcategory ?? d.category}`
+          if (!map.has(key) || d.style === "LINED") {
+            map.set(key, d)
+          }
+        })
+        setUniqueDoodles(Array.from(map.values()))
+
+        setDoodleSubcategories(
+          Array.from(new Set(DOODLES.filter((d) => d.category === "simple-doodles").map((d) => d.subcategory).filter((s): s is string => !!s))).sort(),
+        )
+
+        const elapsed = Date.now() - start
+        const minWait = Math.max(0, 200 - elapsed)
+        setTimeout(() => {
+          if (mounted) setLoading(false)
+        }, minWait)
+      } catch (e) {
+        if (mounted) setLoading(false)
       }
-    })
-    return Array.from(map.values())
+    }
+
+    load()
+    return () => {
+      mounted = false
+    }
   }, [])
 
   // Create a "representative" item per grouped icon so the grid shows only one card per id
@@ -80,15 +112,13 @@ export function useDoodles(): {
   const illustrations = React.useMemo(() => ILLUSTRATIONS, [])
   const illustrationCategories = React.useMemo(() => Array.from(new Set(illustrations.map((i) => i.category))).sort(), [illustrations])
 
-  React.useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 500)
-    return () => clearTimeout(timer)
-  }, [])
+  // (Loading handled by the async importer above)
 
   return {
     doodles: uniqueDoodles,
-    allDoodles: DOODLES,
+    allDoodles,
     categories,
+    doodleSubcategories,
     styles,
     icons,
     groupedIcons,

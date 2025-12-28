@@ -8,9 +8,10 @@ import { useDoodles } from "@/hooks/use-doodles"
 import type { Doodle } from "@/lib/data"
 
 export function DoodleDirectory() {
-  const { doodles, allDoodles, categories, loading, icons, allIcons, groupedIcons, iconTopCategories, candyIcons, candyCategories, illustrations, allIllustrations, illustrationCategories } = useDoodles()
+  const { doodles, allDoodles, categories, doodleSubcategories, loading, icons, allIcons, groupedIcons, iconTopCategories, candyIcons, candyCategories, illustrations, allIllustrations, illustrationCategories } = useDoodles()
   const [searchQuery, setSearchQuery] = React.useState("")
   const [candyOpen, setCandyOpen] = React.useState(false)
+  const [simpleOpen, setSimpleOpen] = React.useState(false)
   const [selectedCategory, setSelectedCategory] = React.useState("All")
   const [selectedDoodle, setSelectedDoodle] = React.useState<Doodle | null>(null)
   const [selectedView, setSelectedView] = React.useState<'doodles' | 'icons' | 'illustrations'>('doodles')
@@ -22,8 +23,9 @@ export function DoodleDirectory() {
     return doodles.filter((doodle: Doodle) => {
       const matchesSearch =
         doodle.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        doodle.category.toLowerCase().includes(searchQuery.toLowerCase())
-      const matchesCategory = selectedCategory === "All" || doodle.category === selectedCategory
+        (doodle.category || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (doodle.subcategory || "").toLowerCase().includes(searchQuery.toLowerCase())
+      const matchesCategory = selectedCategory === "All" || doodle.category === selectedCategory || doodle.subcategory === selectedCategory
       return matchesSearch && matchesCategory
     })
   }, [doodles, searchQuery, selectedCategory])
@@ -135,7 +137,7 @@ export function DoodleDirectory() {
             <button
               onClick={() => { setSelectedCategory("All"); setSelectedView('doodles') }}
               className={`w-full text-left px-3 py-3 rounded-md text-sm transition-colors flex flex-col items-start ${
-                selectedCategory === "All" && selectedView === 'doodles' ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 hover:bg-muted/20"
+                selectedView === 'doodles' ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 hover:bg-muted/20"
               }`}
             >
               <div className="font-medium">Doodles</div>
@@ -256,7 +258,47 @@ export function DoodleDirectory() {
           ) : (
             <div className="overflow-x-auto">
               <div className="flex gap-2 whitespace-nowrap">
-                {["All", ...categories].map((category: string) => (
+                <button
+                  key="All"
+                  onClick={() => { setSelectedCategory("All"); setSelectedView('doodles') }}
+                  className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-colors ${
+                    selectedCategory === "All" ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 text-foreground hover:bg-muted/20"
+                  }`}
+                >
+                  All
+                </button>
+
+                <button
+                  key="simple-doodles"
+                  onClick={() => { setSimpleOpen((s) => !s); setSelectedCategory('simple-doodles'); setSelectedView('doodles') }}
+                  className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-colors ${
+                    selectedCategory === "simple-doodles" ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 text-foreground hover:bg-muted/20"
+                  }`}
+                >
+                  Simple Doodles
+                </button>
+
+                {simpleOpen && (
+                  <>
+                    {doodleSubcategories.map((cat: string) => (
+                      <button
+                        key={`doodle-${cat}`}
+                        onClick={() => { setSelectedCategory(cat); setSelectedView('doodles') }}
+                        className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-colors pl-3 ${
+                          selectedCategory === cat ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 text-foreground hover:bg-muted/20"
+                        }`}
+                      >
+                        {cat
+                          .split("-")
+                          .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+                          .join(" ")}
+                      </button>
+                    ))}
+                  </>
+                )}
+
+                {/* render any other top-level categories if present */}
+                {categories.filter((c) => c !== 'simple-doodles').map((category: string) => (
                   <button
                     key={category}
                     onClick={() => { setSelectedCategory(category); setSelectedView('doodles') }}
@@ -297,7 +339,7 @@ export function DoodleDirectory() {
               <button
                 onClick={() => { setSelectedCategory("All"); setSelectedView('doodles') }}
                 className={`w-full text-left px-3 py-3 rounded-md text-sm transition-colors flex flex-col items-start ${
-                  selectedCategory === "All" && selectedView === 'doodles' ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 hover:bg-muted/20"
+                  selectedView === 'doodles' ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 hover:bg-muted/20"
                 }`}
               >
                 <div className="font-medium">Doodles</div>
@@ -414,14 +456,55 @@ export function DoodleDirectory() {
               <section>
                 <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4">Categories</h3>
                 <div className="space-y-1">
-                  {["All", ...categories].map((category) => (
+                  {/* All */}
+                  <button
+                    onClick={() => { setSelectedCategory("All"); setSelectedView('doodles') }}
+                    className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                      selectedCategory === "All" ? "bg-primary text-primary-foreground font-medium" : "hover:bg-muted text-foreground"
+                    }`}
+                  >
+                    All
+                  </button>
+
+                  {/* Simple Doodles parent */}
+                  <div>
+                    <button
+                      onClick={() => { setSimpleOpen((s) => !s); setSelectedCategory("simple-doodles"); setSelectedView('doodles') }}
+                      className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors flex items-center justify-between ${
+                        selectedCategory === "simple-doodles" ? "bg-primary text-primary-foreground font-medium" : "hover:bg-muted text-foreground"
+                      }`}
+                    >
+                      <span className="font-medium">Simple Doodles</span>
+                      <span className="text-xs text-muted-foreground">{allDoodles.length} assets</span>
+                    </button>
+
+                    {simpleOpen && (
+                      <div className="mt-1 space-y-1">
+                        {doodleSubcategories.map((cat) => (
+                          <button
+                            key={cat}
+                            onClick={() => { setSelectedCategory(cat); setSelectedView('doodles') }}
+                            className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors pl-6 ${
+                              selectedCategory === cat ? "bg-primary text-primary-foreground font-medium" : "hover:bg-muted text-foreground"
+                            }`}
+                          >
+                            {cat
+                              .split("-")
+                              .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+                              .join(" ")}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* other top-level categories if any */}
+                  {categories.filter((c) => c !== 'simple-doodles').map((category) => (
                     <button
                       key={category}
                       onClick={() => { setSelectedCategory(category); setSelectedView('doodles') }}
                       className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                        selectedCategory === category
-                          ? "bg-primary text-primary-foreground font-medium"
-                          : "hover:bg-muted text-foreground"
+                        selectedCategory === category ? "bg-primary text-primary-foreground font-medium" : "hover:bg-muted text-foreground"
                       }`}
                     >
                       {category
@@ -476,9 +559,9 @@ export function DoodleDirectory() {
                   viewMode === "grid" ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6" : "grid-cols-1"
                 } gap-4`}
               >
-              {visibleItems.map((item: any) => (
+              {visibleItems.map((item: any, index: number) => (
                   <DoodleCard
-                    key={`${item.id}-${item.category}-${item.style || ''}`}
+                    key={`${item.id}-${item.category}-${item.subcategory ?? ''}-${item.style || ''}-${item.src ?? index}`}
                     doodle={item}
                     isCandy={candyIcons.some((c: any) => c.id === item.id && c.category === item.category)}
                     allDoodles={selectedView === 'icons' ? allIcons : selectedView === 'illustrations' ? allIllustrations : allDoodles} // Use icon variants when in Icons view

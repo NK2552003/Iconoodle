@@ -1,6 +1,7 @@
 export interface Doodle {
   id: string
   category: string
+  subcategory?: string
   style: string
   src: string
   svg: string
@@ -22,11 +23,25 @@ export interface GroupedIcon {
 }
 
 import doodles from './doodles.json'
+import doodlesAiIconDoodles from './doodles-ai-icon-doodles.json'
+import doodlesAnimalDoodles from './doodles-animal-doodles.json'
+import doodlesAnimalsDoodle from './doodles-animals-doodle.json'
+import doodlesCrispyDoodles from './doodles-crispy-doodles.json'
+import doodlesCuteAnimals from './doodles-cute-animals.json'
+import doodlesEducationalDoodles from './doodles-educational-doodles.json'
+import doodlesFastFoodDoodleArt from './doodles-fast-food-doodle-art.json'
+import doodlesFruitsVegetables from './doodles-fruits-vegetables-doodle.json'
+import doodlesHandDrawnDoodle from './doodles-hand-drawn-doodle.json'
+import doodlesHandDrawnScribbles from './doodles-hand-drawn-doodles-scribbles.json'
+import doodlesHandDrawnLifestyle from './doodles-hand-drawn-lifestyle-doodle.json'
+import doodlesInternetNetwork from './doodles-internet-network-doodles.json'
+import doodlesPotPlants from './doodles-pot-plants-doodle-illustrations.json'
+import doodlesTheDoodleLibrary from './doodles-the-doodle-library.json'
 import groupedIcons from './icons.json'
 import candyIcons from './candy-icons.json'
 import handdrawnIcons from './handdrawn-icons.json'
 import handdrawnType2Icons from './handdrawn-type-2-icons.json'
-import illustrations from './illustrations.json'
+import illustrations from './illustrations.json' 
 // Public folder generated per-subfolder JSONs
 import publicCoolicons from './public-coolicons.json'
 import publicIconly from './public-iconly.json'
@@ -35,7 +50,28 @@ import publicSocialMedia from './public-social-media.json'
 import publicSocialMedia2 from './public-social-media-2.json'
 import publicFluentIcons from './public-fluent-icons.json'
 
-export const DOODLES: Doodle[] = doodles as Doodle[]
+// Normalize only the core `doodles.json` into top-level `simple-doodles` (keep its original category as `subcategory`)
+// All other `doodles-*` files remain as their own top-level categories
+const _toSimple = (arr: any[] | undefined) => (arr || []).map((d: any) => ({ ...(d || {}), subcategory: d?.category, category: 'simple-doodles' }))
+const _asArray = (arr: any[] | undefined) => arr || []
+
+export const DOODLES: Doodle[] = [
+  ..._toSimple(doodles as Doodle[]),
+  ..._asArray((doodlesAiIconDoodles as unknown) as Doodle[]),
+  ..._asArray((doodlesAnimalDoodles as unknown) as Doodle[]),
+  ..._asArray((doodlesAnimalsDoodle as unknown) as Doodle[]),
+  ..._asArray((doodlesCrispyDoodles as unknown) as Doodle[]),
+  ..._asArray((doodlesCuteAnimals as unknown) as Doodle[]),
+  ..._asArray((doodlesEducationalDoodles as unknown) as Doodle[]),
+  ..._asArray((doodlesFastFoodDoodleArt as unknown) as Doodle[]),
+  ..._asArray((doodlesFruitsVegetables as unknown) as Doodle[]),
+  ..._asArray((doodlesHandDrawnDoodle as unknown) as Doodle[]),
+  ..._asArray((doodlesHandDrawnScribbles as unknown) as Doodle[]),
+  ..._asArray((doodlesHandDrawnLifestyle as unknown) as Doodle[]),
+  ..._asArray((doodlesInternetNetwork as unknown) as Doodle[]),
+  ..._asArray((doodlesPotPlants as unknown) as Doodle[]),
+  ..._asArray((doodlesTheDoodleLibrary as unknown) as Doodle[]),
+] as Doodle[]
 
 // Keep backward-compatible flat array available as `ICONS` for components that expect it
 // Include handdrawn icons and public-folder icons so they show up in the Icons view and sidebar categories

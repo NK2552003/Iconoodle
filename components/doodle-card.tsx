@@ -17,23 +17,38 @@ export function DoodleCard({ doodle, allDoodles, viewMode, onClick, isCandy }: D
 
   const currentDoodle = React.useMemo(() => {
     return (
-      allDoodles.find((d) => d.id === doodle.id && d.category === doodle.category && d.style === activeStyle) || doodle
+      allDoodles.find((d) => {
+        if (d.id !== doodle.id) return false
+        // Prefer matching by subcategory when available, otherwise fall back to category
+        if (d.subcategory && doodle.subcategory) return d.subcategory === doodle.subcategory && d.style === activeStyle
+        return d.category === doodle.category && d.style === activeStyle
+      }) || doodle
     )
   }, [allDoodles, doodle, activeStyle])
 
   const hasColored = React.useMemo(() => {
-    return allDoodles.some((d) => d.id === doodle.id && d.category === doodle.category && d.style === "COLORED")
+    return allDoodles.some((d) => {
+      if (d.id !== doodle.id) return false
+      if (d.subcategory && doodle.subcategory) return d.subcategory === doodle.subcategory && d.style === "COLORED"
+      return d.category === doodle.category && d.style === "COLORED"
+    })
   }, [allDoodles, doodle])
 
   // If the currently selected style is WHITE, show a black background behind the svg so it remains visible
   const isWhite = currentDoodle?.style === "WHITE"
 
-  // Special case: coolicons set are white icons — when showing in grid, use black card background
-  const isCoolicons = isGrid && (doodle?.category || '').toLowerCase() === 'coolicons'
+  // Special case: some categories are white assets — show black card background in grid
+  const lowerCat = ((doodle?.category || doodle?.subcategory) || '').toLowerCase()
+  const hasWhiteVariant = allDoodles.some((d) => d.id === doodle.id && d.style === 'WHITE')
+  const isEducationalCategory = lowerCat.includes('educational') || lowerCat.includes('education')
+  const isBlackBackgroundCategory = isGrid && (
+    ['coolicons', 'fast-food-doodle-art'].includes(lowerCat) ||
+    (isEducationalCategory && (hasWhiteVariant || currentDoodle?.style === 'WHITE'))
+  )
 
   return (
     <div
-      className={`group relative ${(isCandy || isCoolicons) ? 'bg-black text-white' : 'bg-muted/30'} rounded-xl border transition-all hover:border-primary/50 hover:shadow-sm overflow-hidden ${
+      className={`group relative ${(isCandy || isBlackBackgroundCategory) ? 'bg-black text-white' : 'bg-muted/30'} rounded-xl border transition-all hover:border-primary/50 hover:shadow-sm overflow-hidden ${
         isGrid ? "aspect-square" : "flex items-center gap-6 p-4"
       }`}
     >
@@ -78,7 +93,7 @@ export function DoodleCard({ doodle, allDoodles, viewMode, onClick, isCandy }: D
         <div className="flex-1 min-w-0">
           <h4 className="font-medium truncate">{doodle.id}</h4>
           <p className="text-xs text-muted-foreground uppercase tracking-wider">
-            {doodle.category} • {currentDoodle.style}
+            {(doodle.subcategory || doodle.category)} • {currentDoodle.style}
           </p>
         </div>
       )}

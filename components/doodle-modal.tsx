@@ -39,7 +39,13 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
     }
 
     // Fallback: doodles (and flat icons) logic
-    let matches = allDoodles.filter((d) => d.id === currentDoodle.id && d.category === currentDoodle.category)
+    // Prefer matching variants within the same subcategory when available (for simple-doodles), otherwise match by category
+    let matches = [] as any[]
+    if (currentDoodle.subcategory) {
+      matches = allDoodles.filter((d) => d.id === currentDoodle.id && d.subcategory === currentDoodle.subcategory)
+    } else {
+      matches = allDoodles.filter((d) => d.id === currentDoodle.id && d.category === currentDoodle.category)
+    }
     if (matches.length === 0) matches = allDoodles.filter((d) => d.id === currentDoodle.id)
 
     const seen = new Map<string, any>()
@@ -57,7 +63,7 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
     })
 
     return sorted
-  }, [allDoodles, currentDoodle.id, currentDoodle.category])
+  }, [allDoodles, currentDoodle.id, currentDoodle.category, currentDoodle.subcategory])
 
   // If the currently selected style is WHITE, show a black background behind the svg in the modal preview
   const isWhite = currentDoodle?.style === "WHITE"
@@ -193,7 +199,7 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
         <div className="w-full md:w-80 border-l p-6 flex flex-col">
           <div className="mb-6">
             <span className="inline-block px-2 py-1 rounded bg-secondary text-secondary-foreground text-[10px] font-bold uppercase tracking-widest mb-2">
-              {currentDoodle.category}
+              {currentDoodle.subcategory || currentDoodle.category}
             </span>
             <h2 className="text-2xl font-bold truncate">{currentDoodle.id}</h2>
             <p className="text-sm text-muted-foreground mt-1">Ready to use in your design project.</p>
