@@ -28,9 +28,12 @@ export function DoodleCard({ doodle, allDoodles, viewMode, onClick, isCandy }: D
   // If the currently selected style is WHITE, show a black background behind the svg so it remains visible
   const isWhite = currentDoodle?.style === "WHITE"
 
+  // Special case: coolicons set are white icons — when showing in grid, use black card background
+  const isCoolicons = isGrid && (doodle?.category || '').toLowerCase() === 'coolicons'
+
   return (
     <div
-      className={`group relative ${isCandy ? 'bg-black text-white' : 'bg-muted/30'} rounded-xl border transition-all hover:border-primary/50 hover:shadow-sm overflow-hidden ${
+      className={`group relative ${(isCandy || isCoolicons) ? 'bg-black text-white' : 'bg-muted/30'} rounded-xl border transition-all hover:border-primary/50 hover:shadow-sm overflow-hidden ${
         isGrid ? "aspect-square" : "flex items-center gap-6 p-4"
       }`}
     >
@@ -39,7 +42,7 @@ export function DoodleCard({ doodle, allDoodles, viewMode, onClick, isCandy }: D
         className={`flex items-center justify-center cursor-pointer ${isGrid ? "w-full h-full p-6" : "w-16 h-16 shrink-0"}`}
       >
         {/* Add a black rounded background when rendering WHITE style icons or Candy Icons */}
-        <div className={`w-full h-full flex items-center justify-center transition-transform group-hover:scale-110 overflow-auto no-scrollbar ${(isWhite || isCandy) ? 'p-4 rounded-md bg-black' : ''}`}>
+        <div className={`w-full h-full flex items-center justify-center transition-transform group-hover:scale-110 overflow-auto no-scrollbar svg-fit ${(isWhite || isCandy) ? 'p-4 rounded-md bg-black' : ''}`}>
           <div
             className={`w-full h-full flex items-center justify-center ${isCandy ? 'text-white' : 'text-foreground'} ${isWhite ? 'contrast-more' : ''}`}
             dangerouslySetInnerHTML={{ __html: currentDoodle.svg }}

@@ -8,15 +8,15 @@ import { useDoodles } from "@/hooks/use-doodles"
 import type { Doodle } from "@/lib/data"
 
 export function DoodleDirectory() {
-  const { doodles, allDoodles, categories, loading, icons, allIcons, iconTopCategories, candyIcons, candyCategories, illustrations, allIllustrations, illustrationCategories } = useDoodles()
+  const { doodles, allDoodles, categories, loading, icons, allIcons, groupedIcons, iconTopCategories, candyIcons, candyCategories, illustrations, allIllustrations, illustrationCategories } = useDoodles()
   const [searchQuery, setSearchQuery] = React.useState("")
   const [candyOpen, setCandyOpen] = React.useState(false)
   const [selectedCategory, setSelectedCategory] = React.useState("All")
   const [selectedDoodle, setSelectedDoodle] = React.useState<Doodle | null>(null)
   const [selectedView, setSelectedView] = React.useState<'doodles' | 'icons' | 'illustrations'>('doodles')
   const [viewMode, setViewMode] = React.useState<"grid" | "list">("grid")
-  // Count groups (one per top-level grouped icon) + candy icons
-  const iconsTotal = React.useMemo(() => icons.length + candyIcons.length, [icons, candyIcons])
+  // Count all icon variants + candy icons
+  const iconsTotal = React.useMemo(() => allIcons.length + candyIcons.length, [allIcons, candyIcons])
 
   const filteredDoodles = React.useMemo(() => {
     return doodles.filter((doodle: Doodle) => {
@@ -29,18 +29,32 @@ export function DoodleDirectory() {
   }, [doodles, searchQuery, selectedCategory])
 
   const filteredIcons = React.useMemo(() => {
-    // include candy icons with regular icons so both show up in icons view
-    const allIconItems = [...icons, ...candyIcons]
-    return allIconItems.filter((icon: any) => {
-      const matchesSearch =
-        icon.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        icon.category.toLowerCase().includes(searchQuery.toLowerCase())
-      // support selecting a top-level Candy Icons group - show all candy icons when that is active
-      if (selectedCategory === "Candy Icons") return selectedView === 'icons' && matchesSearch
-      const matchesCategory = selectedView !== 'icons' ? false : (selectedCategory === "All" || icon.category === selectedCategory)
-      return matchesSearch && matchesCategory
-    })
-  }, [icons, candyIcons, searchQuery, selectedCategory, selectedView])
+    if (selectedView !== 'icons') return []
+    const term = searchQuery.toLowerCase()
+    const matches = (item: any) => item.id.toLowerCase().includes(term) || item.category.toLowerCase().includes(term)
+
+    // Candy Icons parent: show all candy icons (and support their subcategories)
+    if (selectedCategory === 'Candy Icons') {
+      return candyIcons.filter((c: any) => matches(c))
+    }
+
+    // When All is selected, show a representative list (one-per-group) + candy
+    if (selectedCategory === 'All') {
+      return [...icons, ...candyIcons].filter((i: any) => matches(i))
+    }
+
+    // If a top-level icon group is selected, show one representative per grouped icon (not all variants)
+    if (iconTopCategories.includes(selectedCategory)) {
+      const representatives = (icons as any).filter((i: any) => i.category === selectedCategory)
+      // include any candy icons that have the same category name
+      const candyMatches = candyIcons.filter((c: any) => c.category === selectedCategory)
+      return [...representatives, ...candyMatches].filter((i: any) => matches(i))
+    }
+
+    // Otherwise treat selectedCategory as a variant-level category (e.g., 'black', 'color', or candy subcategory)
+    const allIconItems = [...allIcons, ...candyIcons]
+    return allIconItems.filter((icon: any) => matches(icon) && (selectedCategory === 'All' || icon.category === selectedCategory))
+  }, [icons, candyIcons, searchQuery, selectedCategory, selectedView, groupedIcons, allIcons, iconTopCategories])
 
   const filteredIllustrations = React.useMemo(() => {
     return illustrations.filter((ill: Doodle) => {

@@ -145,4 +145,21 @@ html, body, :root {
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Ensure inline SVGs scale up to fill grid cards nicely */
+  .svg-fit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .svg-fit svg {
+    width: 70%;
+    height: 70%;
+    max-width: none;
+    max-height: none;
+  }
+  /* Make SVGs a little larger in grid view hover */
+  .group:hover .svg-fit svg {
+    transform: scale(1.06);
+  }
 }
