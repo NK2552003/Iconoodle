@@ -144,7 +144,7 @@ Made with caffeine and curiosity by Me. If you make something cool with the dood
 
 ---
 
-## Want more docs? There’s a `WIKI.md` with architecture notes, and full guidance on how to download / bulk-export / contribute. Happy doodling!
+## Want more docs? There’s a `WIKI` with architecture notes, and full guidance on how to download / bulk-export / contribute. Happy doodling!
 
 ---
 
