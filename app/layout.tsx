@@ -1,25 +1,27 @@
 import './globals.css'
 import SiteHeader from '../components/site-header'
 
+const metadataBase = new URL('https://nk2552003.github.io/Iconoodle/')
+
 export const metadata = {
   title: 'Iconoodle',
-  description: 'Iconoodle — Free, editable doodles and icons (SVGs)',
-  metadataBase: new URL('https://nk2552003.github.io/Iconoodle/'),
+  description: 'Iconoodle — Free, editable doodles, icons, and illustrations (SVGs)',
+  metadataBase,
   openGraph: {
     title: 'Iconoodle',
-    description: 'Free, editable doodles and icons (SVGs)',
-    url: 'https://nk2552003.github.io/Iconoodle/',
-    images: ['/iconoodle.svg'],
+    description: 'Free, editable doodles, icons, and illustrations (SVGs)',
+    url: metadataBase.toString(),
+    images: [new URL('iconoodle.svg', metadataBase).toString()],
   },
   twitter: {
     card: 'summary',
     title: 'Iconoodle',
-    images: ['/iconoodle.svg'],
+    images: [new URL('iconoodle.svg', metadataBase).toString()],
   },
   icons: {
-    icon: '/iconoodle.svg',
-    shortcut: '/iconoodle.svg',
-    apple: '/iconoodle.svg',
+    icon: new URL('iconoodle.svg', metadataBase).toString(),
+    shortcut: new URL('iconoodle.svg', metadataBase).toString(),
+    apple: new URL('iconoodle.svg', metadataBase).toString(),
   },
 }
 
