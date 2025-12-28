@@ -1,6 +1,26 @@
-# My Doodles & Icons Website
 
-<p align="center"><a href="https://nk2552003.github.io/Iconoodle/"><img src="/iconoodle.svg" alt="Iconoodle" width="64" />Iconoodle</a></p>
+<div
+   align="center"
+  style="
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+  "
+>
+  <img
+    src="https://github.com/NK2552003/Iconoodle/blob/main/public/iconoodle.svg"
+    alt="Iconoodle"
+    width="160"
+  />
+  <h1 style="margin: 0;">ICONOODLE</h1>
+   <div align="center">
+    <p align="center">Doodles, Illustrations & icons</p>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
+    <a href="https://github.com/NK2552003/Iconoodle"><img src="https://img.shields.io/github/stars/NK2552003/Iconoodle?style=social" alt="GitHub Stars"></a>
+    <a href="https://github.com/NK2552003/Iconoodle/commits/main"><img src="https://img.shields.io/github/last-commit/NK2552003/Iconoodle.svg" alt="Last Commit"></a><br/><br/>
+</div>
+</div>
 
 **Hey! I’m Nitish — I made this to make doodles easy to find, grab, and sprinkle into your projects.**
 
