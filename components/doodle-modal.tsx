@@ -15,6 +15,24 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
   const [activeTab, setActiveTab] = React.useState<"preview" | "code">("preview")
   const [size, setSize] = React.useState("128px")
   const [currentDoodle, setCurrentDoodle] = React.useState(doodle)
+  // For responsive preview sizing: clamp requested size to viewport on small screens
+  const [displaySize, setDisplaySize] = React.useState(size)
+
+  React.useEffect(() => {
+    const update = () => {
+      if (size === "100%") {
+        setDisplaySize("100%")
+        return
+      }
+      const requested = parseInt(size.replace("px", ""), 10) || 128
+      const maxAllowed = Math.max(64, Math.min(requested, window.innerWidth - 120))
+      setDisplaySize(`${maxAllowed}px`)
+    }
+    // Run on mount and when size changes
+    update()
+    window.addEventListener("resize", update)
+    return () => window.removeEventListener("resize", update)
+  }, [size])
 
   // Gather all variants for this asset
   // - For grouped icons, prefer using GROUPED_ICONS to get the exact available styles
@@ -76,11 +94,13 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
       const doc = parser.parseFromString(baseSvg, "image/svg+xml")
       const svgEl = doc.querySelector("svg")
       if (svgEl) {
-        // If a size was chosen, set width/height attributes
+        // If a size was chosen, set width/height attributes (we also add max-width styles so SVG can scale down on small viewports)
         if (size !== "100%") {
           svgEl.setAttribute("width", size)
           svgEl.setAttribute("height", size)
         }
+        // Ensure the SVG scales responsively inside its container
+        svgEl.setAttribute("style", "max-width:100%;max-height:100%;height:auto;display:block")
 
         // If requested, inject a black rect background so WHITE icons export with a visible bg
         if (includeBg) {
@@ -132,7 +152,8 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div
-        className="relative w-full max-w-4xl bg-background rounded-3xl border shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]"
+        className="relative w-full max-w-[96vw] sm:max-w-4xl bg-background rounded-3xl border shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]"
+        style={{ maxHeight: 'calc(100vh - 40px)' }}
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -178,7 +199,7 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
             {activeTab === "preview" ? (
               <div
                 className={`flex items-center justify-center transition-all duration-300 ${isWhite ? 'p-4 rounded-md bg-black' : ''}`}
-                style={{ width: size, height: size }}
+                style={size === "100%" ? { width: "100%", height: "auto", maxWidth: "100%", maxHeight: "calc(100vh - 280px)" } : { width: displaySize, height: displaySize, maxWidth: "100%", maxHeight: "calc(100vh - 280px)" }}
               >
                 <div
                   className="w-full h-full flex items-center justify-center"
@@ -196,7 +217,7 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
         </div>
 
         {/* Right Side: Info & Options */}
-        <div className="w-full md:w-80 border-l p-6 flex flex-col">
+        <div className="w-full md:w-80 border-t md:border-l p-6 flex flex-col">
           <div className="mb-6">
             <span className="inline-block px-2 py-1 rounded bg-secondary text-secondary-foreground text-[10px] font-bold uppercase tracking-widest mb-2">
               {currentDoodle.subcategory || currentDoodle.category}
@@ -234,11 +255,12 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
           </div>
 
           {variants.length > 0 && (
-            <div className="mb-8">
+            <div className="hidden md:block mb-8">
               <h3 className="text-xs font-bold uppercase text-muted-foreground tracking-widest mb-3">
                 Available Styles
               </h3>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="max-h-55 sm:max-h-80 overflow-y-auto p-2 no-scrollbar" aria-label="Available Styles">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-2 gap-3">
                 {variants.map((v) => (
                   <div
                     key={v.style}
@@ -258,6 +280,7 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
                 ))}
               </div>
             </div>
+          </div>
           )}
 
           <div className="mt-auto pt-6 border-t flex items-center justify-between text-muted-foreground">
