@@ -203,17 +203,19 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
                 className={`flex items-center justify-center transition-all duration-300 ${isWhite ? 'p-4 rounded-md bg-black' : ''}`}
                 style={size === "100%" ? { width: "100%", height: "auto", maxWidth: "100%", maxHeight: "calc(100vh - 280px)" } : { width: displaySize, height: displaySize, maxWidth: "100%", maxHeight: "calc(100vh - 280px)" }}
               >
-                <div className="block md:hidden absolute left-3 top-1/2 -translate-y-1/2 flex flex-col gap-3 w-16 overflow-y-auto no-scrollbar p-2 items-center z-20 bg-background/70 rounded" style={size === "100%" ? { height: "auto", maxHeight: "calc(100vh - 280px)" } : { height: displaySize }}>
-                  {variants.map((v) => (
-                    <button
-                      key={v.style}
-                      onClick={() => currentDoodle.style !== v.style && setCurrentDoodle(v)}
-                      className={`w-12 h-12 flex items-center justify-center p-1 rounded-md transition-all ${currentDoodle.style === v.style ? "ring-1 ring-primary" : "opacity-70 hover:opacity-100"}`}
-                      aria-label={`${v.style} variant`}
-                      dangerouslySetInnerHTML={{ __html: v.svg }}
-                    />
-                  ))}
-                </div>
+                {variants.length > 1 && (
+                  <div className="md:hidden absolute left-3 top-1/2 -translate-y-1/2 flex flex-col gap-3 w-16 overflow-y-auto no-scrollbar p-2 items-center z-20 bg-background/70 rounded" style={size === "100%" ? { height: "auto", maxHeight: "calc(100vh - 280px)" } : { height: displaySize }}>
+                    {variants.map((v) => (
+                      <button
+                        key={v.style}
+                        onClick={() => currentDoodle.style !== v.style && setCurrentDoodle(v)}
+                        className={`w-12 h-12 flex items-center justify-center p-1 rounded-md transition-all ${currentDoodle.style === v.style ? "ring-1 ring-primary" : "opacity-70 hover:opacity-100"}`}
+                        aria-label={`${v.style} variant`}
+                        dangerouslySetInnerHTML={{ __html: v.svg }}
+                      />
+                    ))}
+                  </div>
+                )}
                 <div
                   className="w-full h-full flex items-center justify-center"
                   dangerouslySetInnerHTML={{ __html: getSizedSvg(currentDoodle.svg) }}
@@ -267,36 +269,31 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
             </div>
           </div>
 
-          {variants.length > 0 && (
+          {variants.length > 1 && (
             <div className="hidden md:block mb-8">
               <h3 className="text-xs font-bold uppercase text-muted-foreground tracking-widest mb-3">
                 Available Styles
               </h3>
               <div className="max-h-55 sm:max-h-80 overflow-y-auto p-2 no-scrollbar" aria-label="Available Styles">
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-2 gap-3">
-                {variants.map((v) => (
-                  <div
-                    key={v.style}
-                    onClick={() => currentDoodle.style !== v.style && setCurrentDoodle(v)}
-                    className={`p-2 rounded-xl border-2 transition-all cursor-pointer ${currentDoodle.style === v.style ? "border-primary ring-1 ring-primary" : "hover:border-primary/50 opacity-60"}`}
-                  >
+                  {variants.map((v) => (
                     <div
-                      className={`aspect-square flex items-center justify-center mb-1 scale-75 ${v.style === 'WHITE' ? 'p-2 rounded-md bg-black' : ''}`}
+                      key={v.style}
+                      onClick={() => currentDoodle.style !== v.style && setCurrentDoodle(v)}
+                      className={`p-2 rounded-xl border-2 transition-all cursor-pointer ${currentDoodle.style === v.style ? "border-primary ring-1 ring-primary" : "hover:border-primary/50 opacity-60"}`}
                     >
-                      <div
-                        className="w-full h-full flex items-center justify-center"
-                        dangerouslySetInnerHTML={{ __html: v.svg }}
-                      />
+                      <div className={`aspect-square flex items-center justify-center mb-1 scale-75 ${v.style === 'WHITE' ? 'p-2 rounded-md bg-black' : ''}`}>
+                        <div className="w-full h-full flex items-center justify-center" dangerouslySetInnerHTML={{ __html: v.svg }} />
+                      </div>
+                      <p className="text-[10px] text-center font-bold">{v.style}</p>
                     </div>
-                    <p className="text-[10px] text-center font-bold">{v.style}</p>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
           )}
 
-          <div className="hidden md:block mt-auto pt-6 border-t flex items-center justify-between text-muted-foreground">
+          <div className="hidden md:flex mt-auto pt-6 border-t items-center justify-between text-muted-foreground">
             <div className="flex gap-4">
               <div className="flex items-center gap-1">
                 <Monitor className="w-4 h-4" aria-hidden={true} />
