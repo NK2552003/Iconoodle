@@ -158,7 +158,7 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
       >
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 p-2 rounded-full hover:bg-muted z-10 transition-colors"
+          className="relative flex justify-end md:absolute right-4 top-4 p-2 rounded-full hover:bg-muted z-10 transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
@@ -187,6 +187,8 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
                 value={size}
                 onChange={(e) => setSize(e.target.value)}
               >
+                <option value="32px">32px</option>
+                <option value="48px">48px</option> 
                 <option value="64px">64px</option>
                 <option value="128px">128px</option>
                 <option value="256px">256px</option>
@@ -195,12 +197,23 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
             </div>
           </div>
 
-          <div className="flex-1 flex items-center justify-center p-8 overflow-auto no-scrollbar">
+          <div className="relative flex-1 flex items-center justify-center p-8 overflow-auto no-scrollbar">
             {activeTab === "preview" ? (
               <div
                 className={`flex items-center justify-center transition-all duration-300 ${isWhite ? 'p-4 rounded-md bg-black' : ''}`}
                 style={size === "100%" ? { width: "100%", height: "auto", maxWidth: "100%", maxHeight: "calc(100vh - 280px)" } : { width: displaySize, height: displaySize, maxWidth: "100%", maxHeight: "calc(100vh - 280px)" }}
               >
+                <div className="block md:hidden absolute left-3 top-1/2 -translate-y-1/2 flex flex-col gap-3 w-16 overflow-y-auto no-scrollbar p-2 items-center z-20 bg-background/70 rounded" style={size === "100%" ? { height: "auto", maxHeight: "calc(100vh - 280px)" } : { height: displaySize }}>
+                  {variants.map((v) => (
+                    <button
+                      key={v.style}
+                      onClick={() => currentDoodle.style !== v.style && setCurrentDoodle(v)}
+                      className={`w-12 h-12 flex items-center justify-center p-1 rounded-md transition-all ${currentDoodle.style === v.style ? "ring-1 ring-primary" : "opacity-70 hover:opacity-100"}`}
+                      aria-label={`${v.style} variant`}
+                      dangerouslySetInnerHTML={{ __html: v.svg }}
+                    />
+                  ))}
+                </div>
                 <div
                   className="w-full h-full flex items-center justify-center"
                   dangerouslySetInnerHTML={{ __html: getSizedSvg(currentDoodle.svg) }}
@@ -283,7 +296,7 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
           </div>
           )}
 
-          <div className="mt-auto pt-6 border-t flex items-center justify-between text-muted-foreground">
+          <div className="hidden md:block mt-auto pt-6 border-t flex items-center justify-between text-muted-foreground">
             <div className="flex gap-4">
               <div className="flex items-center gap-1">
                 <Monitor className="w-4 h-4" aria-hidden={true} />
@@ -298,9 +311,6 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
                 <span className="sr-only">Mobile Ready</span>
               </div>
             </div>
-            <button className="hover:text-red-500 transition-colors">
-              <Heart className="w-5 h-5" />
-            </button>
           </div>
         </div>
       </div>
