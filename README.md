@@ -30,7 +30,7 @@ This project is a pretty little Next.js site full of hand-drawn-ish doodles and 
 
 ## Quick TL;DR (for the short attention span)
 - Clone the repo
-- Run: `pnpm install && pnpm dev`
+- Run: `npm i && npm run dev`
 - Visit: `http://localhost:3000`
 - To download SVGs instantly: use the built-in download buttons or run the tiny Node export script in `tools/export-svgs.js` (instructions below)
 
@@ -49,13 +49,13 @@ This project is a pretty little Next.js site full of hand-drawn-ish doodles and 
 1. Install dependencies:
 
    ```bash
-   pnpm install
+   npm install
    ```
 
 2. Start dev server:
 
    ```bash
-   pnpm dev
+   npm run dev
    ```
 
 3. Open your browser: http://localhost:3000
