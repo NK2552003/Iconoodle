@@ -265,7 +265,7 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
                     : { width: displaySize, height: displaySize, maxWidth: "100%", maxHeight: "calc(100vh - 280px)" }
                 }
               >
-                {variants.length > 1 && (
+               {variants.length > 1 && (
                   <div
                     className="md:hidden absolute left-3 top-1/2 -translate-y-1/2 flex flex-col gap-3 w-16 overflow-y-auto no-scrollbar p-2 items-center z-20 bg-background/70 rounded"
                     style={
