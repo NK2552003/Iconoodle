@@ -7,14 +7,14 @@ Thanks for wanting to help! Contributions are what keep this little doodle garde
 2. Clone it locally
 
 ```bash
-git clone git@github.com:your-username/My_Doodles_Website.git
-cd My_Doodles_Website
-pnpm install
-pnpm dev
+git clone git@github.com:your-username/Iconoodle.git
+cd Iconoodle
+npm install
+npm run dev
 ```
 
 3. Make your changes on a branch named like: `feature/add-sun-doodle` or `fix/modal-download-bug`.
-4. Run `pnpm lint` and make sure things look tidy.
+4. Run `npm lint` and make sure things look tidy.
 5. Open a friendly PR explaining what you changed and why.
 
 ---
@@ -43,7 +43,7 @@ If you add multiple doodles, prefer a single PR with a short description.
 
 ## Style & Quality
 - This is a TypeScript + Next.js project. Be kind to type-safety.
-- Run `pnpm lint` (eslint) before submitting PRs.
+- Run `npm lint` (eslint) before submitting PRs.
 - Keep things accessible (alt text where appropriate in UI changes).
 - Add tests only if your change has logic worth testing — (this repo currently has no test harness, so add tests when relevant and add instructions in your PR).
 
@@ -51,7 +51,7 @@ If you add multiple doodles, prefer a single PR with a short description.
 
 ## Pull Request Checklist
 - [ ] Branch name follows `type/short-description` (e.g. `fix/download-button`)
-- [ ] Linted (run `pnpm lint`)
+- [ ] Linted (run `npm lint`)
 - [ ] No obvious console errors
 - [ ] Updated `lib/doodles.json` or docs if relevant
 - [ ] Short description + screenshot (if UI change)
