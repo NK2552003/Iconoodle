@@ -1,8 +1,11 @@
 "use client"
 
 import * as React from "react"
-import { X, Copy, Download, Heart, Check, Monitor, Smartphone, Tablet } from "lucide-react"
+import { X, Copy, Download, Check, Monitor, Smartphone, Tablet } from "lucide-react"
 import { GROUPED_ICONS } from "@/lib/data"
+import { convertSvgToFormat, type ExportFormat } from "@/lib/svg-utils"
+import { CustomDropdown } from "./custom-dropdown"
+
 
 interface DoodleModalProps {
   doodle: any
@@ -15,8 +18,11 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
   const [activeTab, setActiveTab] = React.useState<"preview" | "code">("preview")
   const [size, setSize] = React.useState("128px")
   const [currentDoodle, setCurrentDoodle] = React.useState(doodle)
-  // For responsive preview sizing: clamp requested size to viewport on small screens
   const [displaySize, setDisplaySize] = React.useState(size)
+  const [copyFormat, setCopyFormat] = React.useState<ExportFormat>("SVG")
+  const [downloadFormat, setDownloadFormat] = React.useState<ExportFormat>("SVG")
+  const [codeFormat, setCodeFormat] = React.useState<ExportFormat>("SVG")
+  const [isWhite, setIsWhite] = React.useState(false) // Declare isWhite variable
 
   React.useEffect(() => {
     const update = () => {
@@ -24,28 +30,43 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
         setDisplaySize("100%")
         return
       }
-      const requested = parseInt(size.replace("px", ""), 10) || 128
+      const requested = Number.parseInt(size.replace("px", ""), 10) || 128
       const maxAllowed = Math.max(64, Math.min(requested, window.innerWidth - 120))
       setDisplaySize(`${maxAllowed}px`)
     }
-    // Run on mount and when size changes
     update()
     window.addEventListener("resize", update)
     return () => window.removeEventListener("resize", update)
   }, [size])
 
-  // Gather all variants for this asset
-  // - For grouped icons, prefer using GROUPED_ICONS to get the exact available styles
-  // - Otherwise, use existing doodle logic (match by id+category then id only)
+  // Lock background scroll while modal is open and avoid layout shift from scrollbar disappearance
+  React.useEffect(() => {
+    const prevOverflow = document.body.style.overflow
+    const prevPaddingRight = document.body.style.paddingRight
+    const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth
+    document.body.style.overflow = 'hidden'
+    if (scrollBarWidth) document.body.style.paddingRight = `${scrollBarWidth}px`
+    return () => {
+      document.body.style.overflow = prevOverflow
+      document.body.style.paddingRight = prevPaddingRight
+    }
+  }, [])
+
   const variants = React.useMemo(() => {
     if (!currentDoodle) return []
 
     const prefOrder = ["LINED", "COLORED", "WHITE", "ICON", "BLACK"]
 
-    // If this id exists in grouped icons, build variants directly from the group
     const group = GROUPED_ICONS.find((g: any) => g.id === currentDoodle.id)
     if (group) {
-      const arr = Object.entries(group.variants).map(([style, v]: any) => ({ id: group.id, category: v.category, style, src: v.src, svg: v.svg, viewBox: v.viewBox }))
+      const arr = Object.entries(group.variants).map(([style, v]: any) => ({
+        id: group.id,
+        category: v.category,
+        style,
+        src: v.src,
+        svg: v.svg,
+        viewBox: v.viewBox,
+      }))
       return arr.sort((a: any, b: any) => {
         const ai = prefOrder.indexOf(a.style as string)
         const bi = prefOrder.indexOf(b.style as string)
@@ -56,8 +77,6 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
       })
     }
 
-    // Fallback: doodles (and flat icons) logic
-    // Prefer matching variants within the same subcategory when available (for simple-doodles), otherwise match by category
     let matches = [] as any[]
     if (currentDoodle.subcategory) {
       matches = allDoodles.filter((d) => d.id === currentDoodle.id && d.subcategory === currentDoodle.subcategory)
@@ -71,7 +90,7 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
       if (!seen.has(m.style)) seen.set(m.style, m)
     })
 
-    const sorted = Array.from(seen.values()).sort((a, b) => {
+    return Array.from(seen.values()).sort((a, b) => {
       const ai = prefOrder.indexOf(a.style as string)
       const bi = prefOrder.indexOf(b.style as string)
       if (ai === -1 && bi === -1) return 0
@@ -79,14 +98,8 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
       if (bi === -1) return -1
       return ai - bi
     })
+  }, [allDoodles, doodle])
 
-    return sorted
-  }, [allDoodles, currentDoodle.id, currentDoodle.category, currentDoodle.subcategory])
-
-  // If the currently selected style is WHITE, show a black background behind the svg in the modal preview
-  const isWhite = currentDoodle?.style === "WHITE"
-
-  // Return an SVG string that respects the selected size (unless size === '100%')
   const getSizedSvg = (baseSvg: string, includeBg = false) => {
     let svgStr = baseSvg
     try {
@@ -94,15 +107,12 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
       const doc = parser.parseFromString(baseSvg, "image/svg+xml")
       const svgEl = doc.querySelector("svg")
       if (svgEl) {
-        // If a size was chosen, set width/height attributes (we also add max-width styles so SVG can scale down on small viewports)
         if (size !== "100%") {
           svgEl.setAttribute("width", size)
           svgEl.setAttribute("height", size)
         }
-        // Ensure the SVG scales responsively inside its container
         svgEl.setAttribute("style", "max-width:100%;max-height:100%;height:auto;display:block")
 
-        // If requested, inject a black rect background so WHITE icons export with a visible bg
         if (includeBg) {
           const w = svgEl.getAttribute("width") || svgEl.getAttribute("viewBox")?.split(" ")[2] || "48"
           const h = svgEl.getAttribute("height") || svgEl.getAttribute("viewBox")?.split(" ")[3] || "48"
@@ -112,48 +122,88 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
           rect.setAttribute("width", String(w))
           rect.setAttribute("height", String(h))
           rect.setAttribute("fill", "black")
-          // Insert as first child so it sits behind icon paths
           const firstChild = svgEl.firstChild
           svgEl.insertBefore(rect, firstChild)
         }
 
-        // Serialize only the outer <svg> element to avoid duplicating xml header
         svgStr = new XMLSerializer().serializeToString(svgEl)
       }
     } catch (e) {
-      // fallback to original svg string
+      // fallback
     }
 
     return svgStr
   }
 
-  const handleCopy = () => {
-    // Copy the raw SVG without the black background rect so user gets the original SVG
+  const handleCopy = (format: ExportFormat = copyFormat) => {
     const sized = getSizedSvg(currentDoodle.svg, false)
-    navigator.clipboard.writeText(sized)
+    const formattedCode = convertSvgToFormat(sized, format, currentDoodle.id)
+    navigator.clipboard.writeText(formattedCode)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const handleDownload = () => {
-    // Download the raw SVG without the black background rect
+  const handleDownload = (format: ExportFormat = downloadFormat) => {
     const sized = getSizedSvg(currentDoodle.svg, false)
-    const blob = new Blob([sized], { type: "image/svg+xml" })
+    const formattedCode = convertSvgToFormat(sized, format, currentDoodle.id)
+
+    const extensionMap: Record<ExportFormat, string> = {
+      SVG: "svg",
+      TSX: "tsx",
+      JSX: "jsx",
+      VUE: "vue",
+      SVELTE: "svelte",
+      ASTRO: "astro",
+      REACT_NATIVE: "tsx",
+      BASE64: "txt",
+    }
+
+    const mimeMap: Record<ExportFormat, string> = {
+      SVG: "image/svg+xml",
+      TSX: "text/typescript-jsx",
+      JSX: "text/javascript-jsx",
+      VUE: "text/vue",
+      SVELTE: "text/svelte",
+      ASTRO: "text/astro",
+      REACT_NATIVE: "text/typescript-jsx",
+      BASE64: "text/plain",
+    }
+
+    const blob = new Blob([formattedCode], { type: mimeMap[format] })
     const url = URL.createObjectURL(blob)
     const link = document.createElement("a")
     link.href = url
-    link.download = `${currentDoodle.id.toLowerCase().replace(/\s+/g, "-")}.svg`
+    link.download = `${currentDoodle.id.toLowerCase().replace(/\s+/g, "-")}.${extensionMap[format]}`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
     URL.revokeObjectURL(url)
   }
 
+  const formats: { label: string; value: ExportFormat }[] = [
+    { label: "SVG", value: "SVG" },
+    { label: "TSX", value: "TSX" },
+    { label: "JSX", value: "JSX" },
+    { label: "Vue", value: "VUE" },
+    { label: "Svelte", value: "SVELTE" },
+    { label: "Astro", value: "ASTRO" },
+    { label: "React Native", value: "REACT_NATIVE" },
+    { label: "Base64", value: "BASE64" },
+  ]
+
+  const formattedCode = React.useMemo(() => {
+    try {
+      return convertSvgToFormat(getSizedSvg(currentDoodle.svg), codeFormat, currentDoodle.id)
+    } catch (e) {
+      return getSizedSvg(currentDoodle.svg)
+    }
+  }, [currentDoodle, codeFormat, size])
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div
         className="relative w-full max-w-[96vw] sm:max-w-4xl bg-background rounded-3xl border shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]"
-        style={{ maxHeight: 'calc(100vh - 40px)' }}
+        style={{ maxHeight: "calc(100vh - 40px)" }}
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -177,7 +227,7 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
                 onClick={() => setActiveTab("code")}
                 className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${activeTab === "code" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
               >
-                SVG Code
+                Code
               </button>
             </div>
 
@@ -187,11 +237,19 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
                 value={size}
                 onChange={(e) => setSize(e.target.value)}
               >
+                <option value="16px">16px</option>
+                <option value="18px">18px</option>
+                <option value="24px">24px</option>
                 <option value="32px">32px</option>
-                <option value="48px">48px</option> 
+                <option value="36px">36px</option>
+                <option value="48px">48px</option>
                 <option value="64px">64px</option>
+                <option value="72px">72px</option>
+                <option value="96px">96px</option>
                 <option value="128px">128px</option>
+                <option value="192px">192px</option>
                 <option value="256px">256px</option>
+                <option value="512px">512px</option>
                 <option value="100%">Original</option>
               </select>
             </div>
@@ -200,11 +258,20 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
           <div className="relative flex-1 flex items-center justify-center p-8 overflow-auto no-scrollbar">
             {activeTab === "preview" ? (
               <div
-                className={`flex items-center justify-center transition-all duration-300 ${isWhite ? 'p-4 rounded-md bg-black' : ''}`}
-                style={size === "100%" ? { width: "100%", height: "auto", maxWidth: "100%", maxHeight: "calc(100vh - 280px)" } : { width: displaySize, height: displaySize, maxWidth: "100%", maxHeight: "calc(100vh - 280px)" }}
+                className={`flex items-center justify-center transition-all duration-300 ${isWhite ? "p-4 rounded-md bg-black" : ""}`}
+                style={
+                  size === "100%"
+                    ? { width: "100%", height: "auto", maxWidth: "100%", maxHeight: "calc(100vh - 280px)" }
+                    : { width: displaySize, height: displaySize, maxWidth: "100%", maxHeight: "calc(100vh - 280px)" }
+                }
               >
                 {variants.length > 1 && (
-                  <div className="md:hidden absolute left-3 top-1/2 -translate-y-1/2 flex flex-col gap-3 w-16 overflow-y-auto no-scrollbar p-2 items-center z-20 bg-background/70 rounded" style={size === "100%" ? { height: "auto", maxHeight: "calc(100vh - 280px)" } : { height: displaySize }}>
+                  <div
+                    className="md:hidden absolute left-3 top-1/2 -translate-y-1/2 flex flex-col gap-3 w-16 overflow-y-auto no-scrollbar p-2 items-center z-20 bg-background/70 rounded"
+                    style={
+                      size === "100%" ? { height: "auto", maxHeight: "calc(100vh - 280px)" } : { height: displaySize }
+                    }
+                  >
                     {variants.map((v) => (
                       <button
                         key={v.style}
@@ -223,8 +290,24 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
               </div>
             ) : (
               <div className="w-full h-full bg-muted/50 rounded-xl p-4 overflow-auto">
-                <pre className="text-[10px] sm:text-xs font-mono text-muted-foreground whitespace-pre-wrap break-all">
-                  {currentDoodle.svg}
+                <div className="mb-3 flex items-center gap-2 flex-end justify-end sticky top-0">
+                  <div className="flex items-center gap-2 border bg-background rounded-xl px-3 py-1">
+                    <span className="text-sm text-muted-foreground">Format:</span>
+                    <CustomDropdown
+                      options={formats}
+                      value={codeFormat}
+                      onChange={(val) => setCodeFormat(val)}
+                      triggerClassName="hover:bg-muted"
+                    />
+                  </div>
+                </div>
+
+                <pre
+                  className="text-[10px] sm:text-xs font-mono text-muted-foreground whitespace-pre-wrap break-all max-h-4xl overflow-auto overscroll-contain"
+                  onWheel={(e) => e.stopPropagation()}
+                  onTouchMove={(e) => e.stopPropagation()}
+                >
+                  {formattedCode}
                 </pre>
               </div>
             )}
@@ -243,29 +326,52 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
 
           <div className="space-y-4 mb-8">
             <div className="flex flex-col gap-2">
-              <button
-                onClick={handleCopy}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-all active:scale-95"
-              >
-                {copied ? (
-                  <>
-                    <Check className="w-4 h-4" />
-                    Copied to Clipboard
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-4 h-4" />
-                    Copy SVG String
-                  </>
-                )}
-              </button>
-              <button
-                onClick={handleDownload}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 font-semibold hover:bg-muted transition-all active:scale-95"
-              >
-                <Download className="w-4 h-4" />
-                Download .SVG
-              </button>
+              <div className="flex w-full group overflow-hidden rounded-xl border-2">
+                <button
+                  onClick={() => handleCopy(activeTab === 'code' ? codeFormat : copyFormat)}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-all active:scale-95"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="w-4 h-4" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" />
+                      Copy {(activeTab === 'code' ? codeFormat : copyFormat) === "SVG" ? "SVG" : (activeTab === 'code' ? codeFormat : copyFormat) === "REACT_NATIVE" ? "RN" : (activeTab === 'code' ? codeFormat : copyFormat)}
+                    </>
+                  )}
+                </button>
+                <CustomDropdown
+                  options={formats}
+                  value={copyFormat}
+                  onChange={(val) => {
+                    setCopyFormat(val)
+                    handleCopy(val)
+                  }}
+                  triggerClassName="bg-primary text-primary-foreground border-primary-foreground/20 hover:bg-primary/90"
+                />
+              </div>
+
+              <div className="flex w-full group overflow-hidden rounded-xl border-2">
+                <button
+                  onClick={() => handleDownload(activeTab === 'code' ? codeFormat : downloadFormat)}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 font-semibold hover:bg-muted transition-all active:scale-95"
+                >
+                  <Download className="w-4 h-4" />
+                  Download {(activeTab === 'code' ? codeFormat : downloadFormat) === "SVG" ? ".SVG" : (activeTab === 'code' ? codeFormat : downloadFormat) === "REACT_NATIVE" ? "RN" : (activeTab === 'code' ? codeFormat : downloadFormat)}
+                </button>
+                <CustomDropdown
+                  options={formats}
+                  value={downloadFormat}
+                  onChange={(val) => {
+                    setDownloadFormat(val)
+                    handleDownload(val)
+                  }}
+                  triggerClassName="hover:bg-muted"
+                />
+              </div>
             </div>
           </div>
 
@@ -282,8 +388,13 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
                       onClick={() => currentDoodle.style !== v.style && setCurrentDoodle(v)}
                       className={`p-2 rounded-xl border-2 transition-all cursor-pointer ${currentDoodle.style === v.style ? "border-primary ring-1 ring-primary" : "hover:border-primary/50 opacity-60"}`}
                     >
-                      <div className={`aspect-square flex items-center justify-center mb-1 scale-75 ${v.style === 'WHITE' ? 'p-2 rounded-md bg-black' : ''}`}>
-                        <div className="w-full h-full flex items-center justify-center" dangerouslySetInnerHTML={{ __html: v.svg }} />
+                      <div
+                        className={`aspect-square flex items-center justify-center mb-1 scale-75 ${v.style === "WHITE" ? "p-2 rounded-md bg-black" : ""}`}
+                      >
+                        <div
+                          className="w-full h-full flex items-center justify-center"
+                          dangerouslySetInnerHTML={{ __html: v.svg }}
+                        />
                       </div>
                       <p className="text-[10px] text-center font-bold">{v.style}</p>
                     </div>

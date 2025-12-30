@@ -37,10 +37,13 @@ import doodlesHandDrawnLifestyle from './doodles-hand-drawn-lifestyle-doodle.jso
 import doodlesInternetNetwork from './doodles-internet-network-doodles.json'
 import doodlesPotPlants from './doodles-pot-plants-doodle-illustrations.json'
 import doodlesTheDoodleLibrary from './doodles-the-doodle-library.json'
+import doodles3 from './doodles-3.json'
+import natureDoodles from './nature-doodles.json'
 import groupedIcons from './icons.json'
 import candyIcons from './candy-icons.json'
 import handdrawnIcons from './handdrawn-icons.json'
 import handdrawnType2Icons from './handdrawn-type-2-icons.json'
+import handmadeDoodledIcons from './handmade-doodled-icons.json'
 import illustrations from './illustrations.json' 
 // Public folder generated per-subfolder JSONs
 import publicCoolicons from './public-coolicons.json'
@@ -54,6 +57,8 @@ import publicFluentIcons from './public-fluent-icons.json'
 // All other `doodles-*` files remain as their own top-level categories
 const _toSimple = (arr: any[] | undefined) => (arr || []).map((d: any) => ({ ...(d || {}), subcategory: d?.category, category: 'simple-doodles' }))
 const _asArray = (arr: any[] | undefined) => arr || []
+// Ensure files that don't include a top-level `category` get one (used for sidebar grouping)
+const _withCategory = (arr: any[] | undefined, cat: string) => (arr || []).map((d: any) => ({ ...(d || {}), category: d?.category ?? cat }))
 
 export const DOODLES: Doodle[] = [
   ..._toSimple(doodles as Doodle[]),
@@ -71,6 +76,8 @@ export const DOODLES: Doodle[] = [
   ..._asArray((doodlesInternetNetwork as unknown) as Doodle[]),
   ..._asArray((doodlesPotPlants as unknown) as Doodle[]),
   ..._asArray((doodlesTheDoodleLibrary as unknown) as Doodle[]),
+  ..._withCategory((doodles3 as unknown) as Doodle[], 'doodles-3'),
+  ..._withCategory((natureDoodles as unknown) as Doodle[], 'nature-doodles'),
 ] as Doodle[]
 
 // Keep backward-compatible flat array available as `ICONS` for components that expect it
@@ -80,6 +87,7 @@ const sources: Array<{ items: GroupedIcon[]; source: string }> = [
   { items: (groupedIcons as unknown) as GroupedIcon[], source: 'icons' },
   { items: ((handdrawnIcons as unknown) as GroupedIcon[]), source: 'handdrawn' },
   { items: ((handdrawnType2Icons as unknown) as GroupedIcon[]), source: 'handdrawn-type-2' },
+  { items: ((handmadeDoodledIcons as unknown) as GroupedIcon[]), source: 'handmade-doodled' },
   { items: ((publicCoolicons as unknown) as GroupedIcon[]), source: 'public-coolicons' },
   { items: ((publicIconly as unknown) as GroupedIcon[]), source: 'public-iconly' },
   { items: ((publicSmooothIcons as unknown) as GroupedIcon[]), source: 'public-smoooth-icons' },

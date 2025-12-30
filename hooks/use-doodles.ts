@@ -89,12 +89,16 @@ export function useDoodles(): {
       }
       // fallback to first variant
       if (!picked) {
-        const first = Object.values(g.variants)[0]
+        const first = Object.values(g.variants || {})[0]
         picked = first
       }
+
+      // skip groups with no variants
+      if (!picked) return null
+
       // Use top-level group category when present (e.g. "Simple Icons") so the UI shows top categories, not variant categories
-      return { id: g.id, category: g.category ?? picked.category, style: picked.style, src: picked.src, svg: picked.svg, viewBox: picked.viewBox }
-    })
+      return { id: g.id, category: g.category ?? picked.category ?? '', style: picked.style ?? '', src: picked.src ?? '', svg: picked.svg ?? '', viewBox: picked.viewBox ?? '' }
+    }).filter((i): i is Doodle => !!i)
   }, [])
 
   const groupedIcons = React.useMemo(() => GROUPED_ICONS, [])
