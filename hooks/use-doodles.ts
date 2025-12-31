@@ -1,7 +1,8 @@
 "use client"
 
 import * as React from "react"
-import { ICONS, GROUPED_ICONS, CANDY_ICONS, ILLUSTRATIONS, type Doodle, type GroupedIcon } from "@/lib/data"
+import type { Doodle, GroupedIcon } from "@/lib/data"
+import type { IconVariant } from "@/lib/data"
 
 export function useDoodles(): {
   doodles: Doodle[]
@@ -20,66 +21,166 @@ export function useDoodles(): {
   allIllustrations: Doodle[]
   illustrationCategories: string[]
   loading: boolean
+  // on-demand loaders
+  loadDoodleCategory: (name: string) => Promise<void>
+  loadNextDoodleCategory: () => Promise<void>
+  hasMoreAll: boolean
+  loadingDoodles: boolean
+  loadIcons: () => Promise<void>
+  loadingIcons: boolean
+  loadIllustrations: () => Promise<void>
+  loadingIllustrations: boolean
 } {
-  const [loading, setLoading] = React.useState(true)
+  // UI should render immediately — doodles load on demand
+  const [loading, setLoading] = React.useState(false)
 
-  // We'll load DOODLES lazily (they contain full SVG strings & are large)
-  const [allDoodles, setAllDoodles] = React.useState<Doodle[]>([])
+  // We'll load DOODLES on demand (they contain full SVG strings & are large)
   const [categories, setCategories] = React.useState<string[]>([])
   const [styles, setStyles] = React.useState<string[]>([])
   const [uniqueDoodles, setUniqueDoodles] = React.useState<Doodle[]>([])
   const [doodleSubcategories, setDoodleSubcategories] = React.useState<string[]>([])
 
-  // Load DOODLES asynchronously to avoid bundling them into the initial client chunk
+  // Doodle loading control (per-category concurrent loads)
+  // Track whether ANY doodle category loads are in progress via a Set of category names
+  const [loadedDoodles, setLoadedDoodles] = React.useState(false)
+  const [loadedDoodleMap, setLoadedDoodleMap] = React.useState<Map<string, Doodle[]>>(new Map())
+  const [loadedDoodleOrder, setLoadedDoodleOrder] = React.useState<string[]>([])
+  const [loadingDoodleCategories, setLoadingDoodleCategories] = React.useState<Set<string>>(new Set())
+  const loadingDoodles = loadingDoodleCategories.size > 0
+  const FILES: Array<{ name: string; path: string; normalizeToSimple?: boolean }> = [
+    { name: 'simple-doodles', path: 'doodles.json', normalizeToSimple: true },
+    { name: 'doodles-ai-icon-doodles', path: 'doodles-ai-icon-doodles.json' },
+    { name: 'doodles-animal-doodles', path: 'doodles-animal-doodles.json' },
+    { name: 'doodles-animals-doodle', path: 'doodles-animals-doodle.json' },
+    { name: 'doodles-crispy-doodles', path: 'doodles-crispy-doodles.json' },
+    { name: 'doodles-cute-animals', path: 'doodles-cute-animals.json' },
+    { name: 'doodles-educational-doodles', path: 'doodles-educational-doodles.json' },
+    { name: 'doodles-fast-food-doodle-art', path: 'doodles-fast-food-doodle-art.json' },
+    { name: 'doodles-fruits-vegetables', path: 'doodles-fruits-vegetables-doodle.json' },
+    { name: 'doodles-hand-drawn-doodle', path: 'doodles-hand-drawn-doodle.json' },
+    { name: 'doodles-hand-drawn-doodles-scribbles', path: 'doodles-hand-drawn-doodles-scribbles.json' },
+    { name: 'doodles-hand-drawn-lifestyle', path: 'doodles-hand-drawn-lifestyle-doodle.json' },
+    { name: 'doodles-internet-network', path: 'doodles-internet-network-doodles.json' },
+    { name: 'doodles-pot-plants', path: 'doodles-pot-plants-doodle-illustrations.json' },
+    { name: 'doodles-the-doodle-library', path: 'doodles-the-doodle-library.json' },
+    { name: 'doodles-3', path: 'doodles-3.json' },
+    { name: 'nature-doodles', path: 'nature-doodles.json' },
+  ]
+  const DOODLE_CATEGORIES = FILES.map((f) => f.name)
+
+  // Load a single doodle category on demand
+  const loadDoodleCategory = React.useCallback(async (name: string) => {
+    if (loadedDoodleMap.has(name) || loadingDoodleCategories.has(name)) return
+    // mark this category as loading (allow other categories to load concurrently)
+    setLoadingDoodleCategories((prev) => new Set(prev).add(name))
+    try {
+      const entry = FILES.find((f) => f.name === name)
+      if (!entry) return
+
+      const mod = await import(/* @vite-ignore */ `@/lib/${entry.path}`)
+      const arr = (mod?.default || mod) as any[]
+      if (!Array.isArray(arr)) return
+
+      let items: Doodle[]
+      if (entry.normalizeToSimple) {
+        items = arr.map((d) => ({ ...(d || {}), subcategory: d?.category, category: 'simple-doodles' })) as Doodle[]
+      } else {
+        // force top-level category to the file name so filtering by sidebar category works reliably
+        items = arr.map((d) => ({ ...(d || {}), category: entry.name })) as Doodle[]
+      }
+
+      setLoadedDoodleMap((prev) => new Map(prev).set(name, items))
+      setLoadedDoodleOrder((prev) => (prev.includes(name) ? prev : [...prev, name]))
+      setLoadedDoodles(true)
+    } finally {
+      // unmark loading for this category
+      setLoadingDoodleCategories((prev) => {
+        const n = new Set(prev)
+        n.delete(name)
+        return n
+      })
+    }
+  }, [loadedDoodleMap, loadingDoodleCategories])
+
+  const loadNextDoodleCategory = React.useCallback(async () => {
+    const next = FILES.map((f) => f.name).find((c) => !loadedDoodleOrder.includes(c))
+    if (!next) return
+    await loadDoodleCategory(next)
+  }, [loadedDoodleOrder, loadDoodleCategory])
+
+  const hasMoreAll = loadedDoodleOrder.length < FILES.length
+
+  // Initialize UI quickly: populate categories so sidebar renders instantly
   React.useEffect(() => {
-    let mounted = true
-    const start = Date.now()
+    setCategories(DOODLE_CATEGORIES.slice())
+    const t = setTimeout(() => setLoading(false), 20)
+    return () => clearTimeout(t)
+  }, [])
 
-    const load = async () => {
-      try {
-        const mod = await import("@/lib/data")
-        if (!mounted) return
-        const DOODLES = (mod.DOODLES || []) as Doodle[]
+  // All doodles are the concatenation of loaded categories in the chosen order
+  const allDoodles = React.useMemo(() => loadedDoodleOrder.flatMap((n) => loadedDoodleMap.get(n) || []), [loadedDoodleOrder, loadedDoodleMap])
 
-        setAllDoodles(DOODLES)
+  // Recompute derived doodle info when any doodle category loads
+  React.useEffect(() => {
+    setStyles(Array.from(new Set(allDoodles.map((d) => d.style))))
+    const map = new Map<string, Doodle>()
+    allDoodles.forEach((d) => {
+      const key = `${d.id}-${d.subcategory ?? d.category}`
+      if (!map.has(key) || d.style === "LINED") map.set(key, d)
+    })
+    setUniqueDoodles(Array.from(map.values()))
 
-        setCategories(Array.from(new Set(DOODLES.map((d) => d.category))).sort())
-        setStyles(Array.from(new Set(DOODLES.map((d) => d.style))))
+    const simple = loadedDoodleMap.get('simple-doodles') || []
+    setDoodleSubcategories(Array.from(new Set(simple.map((d) => d.subcategory).filter((s): s is string => !!s))).sort())
+  }, [allDoodles, loadedDoodleMap])
 
-        const map = new Map<string, Doodle>()
-        DOODLES.forEach((d) => {
-          const key = `${d.id}-${d.subcategory ?? d.category}`
-          if (!map.has(key) || d.style === "LINED") {
-            map.set(key, d)
+  // Icons & Illustrations (loaded on-demand)
+  const [groupedIcons, setGroupedIcons] = React.useState<GroupedIcon[]>([])
+  const [allIcons, setAllIcons] = React.useState<Doodle[]>([])
+  const [candyIcons, setCandyIcons] = React.useState<Doodle[]>([])
+  const [loadingIcons, setLoadingIcons] = React.useState(false)
+  const [loadedIconSources, setLoadedIconSources] = React.useState<string[]>([])
+
+  const [illustrations, setIllustrations] = React.useState<Doodle[]>([])
+  const [loadingIllustrations, setLoadingIllustrations] = React.useState(false)
+  const [loadedIllustrations, setLoadedIllustrations] = React.useState(false)
+
+  // Helper: merge grouped icon sources (preserve existing variant merging behavior)
+  const mergeGroupedSources = (sources: Array<{ items: GroupedIcon[]; source: string }>) => {
+    const merged = new Map<string, GroupedIcon>()
+    for (const { items, source } of sources) {
+      if (!items) continue
+      for (const g of items) {
+        if (!g || !g.id) continue
+        const existing = merged.get(g.id)
+        if (!existing) {
+          merged.set(g.id, { id: g.id, category: g.category, variants: { ...g.variants } })
+          continue
+        }
+
+        if (!existing.category && g.category) existing.category = g.category
+
+        for (const [k, v] of Object.entries(g.variants || {})) {
+          if (!existing.variants[k]) {
+            existing.variants[k] = v as IconVariant
+          } else {
+            let newKey = `${k}_${source.replace(/[^a-z0-9]/gi, '_')}`
+            let i = 1
+            while (existing.variants[newKey]) {
+              newKey = `${k}_${source.replace(/[^a-z0-9]/gi, '_')}_${i++}`
+            }
+            existing.variants[newKey] = v as IconVariant
           }
-        })
-        setUniqueDoodles(Array.from(map.values()))
-
-        setDoodleSubcategories(
-          Array.from(new Set(DOODLES.filter((d) => d.category === "simple-doodles").map((d) => d.subcategory).filter((s): s is string => !!s))).sort(),
-        )
-
-        const elapsed = Date.now() - start
-        const minWait = Math.max(0, 200 - elapsed)
-        setTimeout(() => {
-          if (mounted) setLoading(false)
-        }, minWait)
-      } catch (e) {
-        if (mounted) setLoading(false)
+        }
       }
     }
-
-    load()
-    return () => {
-      mounted = false
-    }
-  }, [])
+    return Array.from(merged.values())
+  }
 
   // Create a "representative" item per grouped icon so the grid shows only one card per id
   const icons = React.useMemo(() => {
-    // Preferred style order when choosing representative
     const pref = ["BLACK", "ICON", "COLORED", "WHITE", "LINED"]
-    return GROUPED_ICONS.map((g) => {
+    return groupedIcons.map((g) => {
       let picked: any = null
       for (const p of pref) {
         if (g.variants && g.variants[p]) {
@@ -87,24 +188,16 @@ export function useDoodles(): {
           break
         }
       }
-      // fallback to first variant
       if (!picked) {
         const first = Object.values(g.variants || {})[0]
         picked = first
       }
-
-      // skip groups with no variants
       if (!picked) return null
-
-      // Use top-level group category when present (e.g. "Simple Icons") so the UI shows top categories, not variant categories
       return { id: g.id, category: g.category ?? picked.category ?? '', style: picked.style ?? '', src: picked.src ?? '', svg: picked.svg ?? '', viewBox: picked.viewBox ?? '' }
     }).filter((i): i is Doodle => !!i)
-  }, [])
+  }, [groupedIcons])
 
-  const groupedIcons = React.useMemo(() => GROUPED_ICONS, [])
-  const allIcons = React.useMemo(() => ICONS, [])
   // Candy icons (flat list) and their categories
-  const candyIcons = React.useMemo(() => CANDY_ICONS, [])
   const candyCategories = React.useMemo(() => Array.from(new Set(candyIcons.map((c) => c.category))).sort(), [candyIcons])
 
   // Top-level icon categories (group-level), e.g. "Simple Icons"
@@ -112,11 +205,58 @@ export function useDoodles(): {
   // Keep variant-level categories available if needed
   const iconCategories = React.useMemo(() => Array.from(new Set(allIcons.map((i) => i.category))).sort(), [allIcons])
 
-  // Illustrations
-  const illustrations = React.useMemo(() => ILLUSTRATIONS, [])
   const illustrationCategories = React.useMemo(() => Array.from(new Set(illustrations.map((i) => i.category))).sort(), [illustrations])
 
-  // (Loading handled by the async importer above)
+  // Load all icon sources + candy icons (on-demand)
+  const loadIcons = React.useCallback(async () => {
+    if (loadingIcons || groupedIcons.length > 0 || allIcons.length > 0) return
+    setLoadingIcons(true)
+    try {
+      const files = [
+        'icons.json',
+        'handdrawn-icons.json',
+        'handdrawn-type-2-icons.json',
+        'handmade-doodled-icons.json',
+        'public-coolicons.json',
+        'public-iconly.json',
+        'public-smoooth-icons.json',
+        'public-social-media.json',
+        'public-social-media-2.json',
+        'public-fluent-icons.json',
+      ]
+
+      const mods = await Promise.all(files.map((f) => import(`@/lib/${f}`)))
+      const sources = mods.map((m, i) => ({ items: (m?.default || m) as GroupedIcon[], source: files[i].replace(/\.json$/, '') }))
+      const merged = mergeGroupedSources(sources)
+      setGroupedIcons(merged)
+      setAllIcons(merged.flatMap((g) => Object.entries(g.variants).map(([style, v]) => ({ id: g.id, category: v.category, style, src: v.src, svg: v.svg, viewBox: v.viewBox }))))
+
+      // load candy icons too
+      try {
+        const candyMod = await import('@/lib/candy-icons.json')
+        const candy = (candyMod?.default || candyMod) as Doodle[]
+        setCandyIcons(Array.isArray(candy) ? candy : [])
+      } catch (e) {
+        setCandyIcons([])
+      }
+    } finally {
+      setLoadingIcons(false)
+    }
+  }, [loadingIcons, groupedIcons.length, allIcons.length])
+
+  // Load illustrations on demand
+  const loadIllustrations = React.useCallback(async () => {
+    if (loadingIllustrations || loadedIllustrations) return
+    setLoadingIllustrations(true)
+    try {
+      const mod = await import('@/lib/illustrations.json')
+      const arr = (mod?.default || mod) as Doodle[]
+      setIllustrations(Array.isArray(arr) ? arr : [])
+      setLoadedIllustrations(true)
+    } finally {
+      setLoadingIllustrations(false)
+    }
+  }, [loadingIllustrations, loadedIllustrations])
 
   return {
     doodles: uniqueDoodles,
@@ -135,5 +275,16 @@ export function useDoodles(): {
     allIllustrations: illustrations,
     illustrationCategories,
     loading,
+
+    // on-demand loaders
+    loadDoodleCategory,
+    loadNextDoodleCategory,
+    hasMoreAll,
+    // expose a boolean indicating whether any doodle category is loading
+    loadingDoodles,
+    loadIcons,
+    loadingIcons,
+    loadIllustrations,
+    loadingIllustrations,
   }
 }

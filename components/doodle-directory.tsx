@@ -1,14 +1,14 @@
 "use client"
 
 import * as React from "react"
-import { Search, Grid, List } from "lucide-react"
+import { Search, Grid, List, Loader } from "lucide-react"
 import { DoodleCard } from "@/components/doodle-card"
 import { DoodleModal } from "@/components/doodle-modal"
 import { useDoodles } from "@/hooks/use-doodles"
 import type { Doodle } from "@/lib/data"
 
 export function DoodleDirectory() {
-  const { doodles, allDoodles, categories, doodleSubcategories, loading, icons, allIcons, groupedIcons, iconTopCategories, candyIcons, candyCategories, illustrations, allIllustrations, illustrationCategories } = useDoodles()
+  const { doodles, allDoodles, categories, doodleSubcategories, loading, icons, allIcons, groupedIcons, iconTopCategories, candyIcons, candyCategories, illustrations, allIllustrations, illustrationCategories, loadDoodleCategory, loadNextDoodleCategory, hasMoreAll, loadingDoodles, loadIcons, loadingIcons, loadIllustrations, loadingIllustrations } = useDoodles()
   const [searchQuery, setSearchQuery] = React.useState("")
   const [candyOpen, setCandyOpen] = React.useState(false)
   const [simpleOpen, setSimpleOpen] = React.useState(false)
@@ -91,6 +91,28 @@ export function DoodleDirectory() {
     return () => window.clearTimeout(t)
   }, [selectedCategory, selectedView, viewMode, searchQuery, candyOpen])
 
+  // When the user switches views, load the corresponding JSON on demand
+  React.useEffect(() => {
+    if (selectedView === 'doodles') {
+      // If user selected a top-level doodle file category, load that file; otherwise load 'simple-doodles' (subcategories live inside it)
+      let nameToLoad = 'simple-doodles'
+      if (selectedCategory !== 'All') {
+        if (categories.includes(selectedCategory)) {
+          nameToLoad = selectedCategory
+        } else {
+          nameToLoad = 'simple-doodles'
+        }
+      }
+      loadDoodleCategory(nameToLoad)
+    }
+    if (selectedView === 'icons') {
+      loadIcons()
+    }
+    if (selectedView === 'illustrations') {
+      loadIllustrations()
+    }
+  }, [selectedView, selectedCategory, loadDoodleCategory, loadIcons, loadIllustrations])
+
   // Combine doodles/icons/illustrations into a single view depending on selectedView
   const filteredItems = React.useMemo(() => {
     if (selectedView === 'icons') return filteredIcons
@@ -99,8 +121,12 @@ export function DoodleDirectory() {
   }, [selectedView, filteredDoodles, filteredIcons, filteredIllustrations])
   const visibleItems = React.useMemo(() => filteredItems.slice(0, visibleCount), [filteredItems, visibleCount])
 
+  // Only show the full-grid loading placeholders when the view is actively loading AND there are no items to show yet
+  const viewLoading = (selectedView === 'doodles' && loadingDoodles) || (selectedView === 'icons' && loadingIcons) || (selectedView === 'illustrations' && loadingIllustrations) || loading
+  const showLoadingPlaceholders = viewLoading && filteredItems.length === 0
+
   React.useEffect(() => {
-    if (loading) return
+    if (showLoadingPlaceholders) return
     const currentTotal = selectedView === 'icons' ? filteredIcons.length : selectedView === 'illustrations' ? filteredIllustrations.length : filteredDoodles.length
     if (currentTotal <= visibleCount) return
     const node = sentinelRef.current
@@ -111,6 +137,10 @@ export function DoodleDirectory() {
         entries.forEach((entry) => {
           if (entry.isIntersecting && !isFetchingMore) {
             setIsFetchingMore(true)
+            // If in Doodles view, try loading the next doodle category (if any) to progressively fill "All"
+            if (selectedView === 'doodles' && hasMoreAll) {
+              loadNextDoodleCategory()
+            }
             // emulate async fetch
             setTimeout(() => {
               setVisibleCount((v) => Math.min(v + PAGE_SIZE, currentTotal))
@@ -124,7 +154,7 @@ export function DoodleDirectory() {
 
     observer.observe(node)
     return () => observer.disconnect()
-  }, [loading, filteredIcons.length, filteredDoodles.length, filteredIllustrations.length, visibleCount, isFetchingMore, selectedView])
+  }, [showLoadingPlaceholders, filteredIcons.length, filteredDoodles.length, filteredIllustrations.length, visibleCount, isFetchingMore, selectedView])
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -141,7 +171,11 @@ export function DoodleDirectory() {
               }`}
             >
               <div className="font-medium">Doodles</div>
-              <div className="text-xs text-muted-foreground">{allDoodles.length} assets</div>
+              {loadingDoodles ? (
+                <div className="text-xs text-muted-foreground flex items-center gap-1"><Loader className="w-3 h-3 animate-spin" /> Loading</div>
+              ) : (
+                <div className="text-xs text-muted-foreground">{allDoodles.length} assets</div>
+              )}
             </button>
             <button
               onClick={() => { setSelectedCategory("All"); setSelectedView('icons') }}
@@ -150,7 +184,13 @@ export function DoodleDirectory() {
               }`}
             >
               <div className="font-medium">Icons</div>
-              <div className="text-xs text-muted-foreground">{iconsTotal} icons</div>
+              {loadingIcons ? (
+                <div className="text-xs text-muted-foreground flex items-center gap-1"><Loader className="w-3 h-3 animate-spin" /> Loading</div>
+              ) : (
+                (iconsTotal > 0 || selectedView === 'icons') ? (
+                  <div className="text-xs text-muted-foreground">{iconsTotal} icons</div>
+                ) : null
+              )}
             </button>
             <button
               onClick={() => { setSelectedCategory("All"); setSelectedView('illustrations') }}
@@ -159,7 +199,13 @@ export function DoodleDirectory() {
               }`}
             >
               <div className="font-medium">Illustrations</div>
-              <div className="text-xs text-muted-foreground">{allIllustrations.length} assets</div>
+              {loadingIllustrations ? (
+                <div className="text-xs text-muted-foreground flex items-center gap-1"><Loader className="w-3 h-3 animate-spin" /> Loading</div>
+              ) : (
+                (allIllustrations.length > 0 || selectedView === 'illustrations') ? (
+                  <div className="text-xs text-muted-foreground">{allIllustrations.length} assets</div>
+                ) : null
+              )}
             </button>
           </div>
 
@@ -260,7 +306,7 @@ export function DoodleDirectory() {
               <div className="flex gap-2 whitespace-nowrap">
                 <button
                   key="All"
-                  onClick={() => { setSelectedCategory("All"); setSelectedView('doodles') }}
+                  onClick={() => { setSelectedCategory("All"); setSelectedView('doodles'); loadDoodleCategory('simple-doodles') }}
                   className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-colors ${
                     selectedCategory === "All" ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 text-foreground hover:bg-muted/20"
                   }`}
@@ -301,7 +347,7 @@ export function DoodleDirectory() {
                 {categories.filter((c) => c !== 'simple-doodles').map((category: string) => (
                   <button
                     key={category}
-                    onClick={() => { setSelectedCategory(category); setSelectedView('doodles') }}
+                    onClick={() => { setSelectedCategory(category); setSelectedView('doodles'); loadDoodleCategory(category) }}
                     className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-colors ${
                       selectedCategory === category ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 text-foreground hover:bg-muted/20"
                     }`}
@@ -352,7 +398,13 @@ export function DoodleDirectory() {
                 }`}
               >
                 <div className="font-medium">Icons</div>
-                <div className="text-xs text-muted-foreground">{iconsTotal} icons</div>
+                {loadingIcons ? (
+                  <div className="text-xs text-muted-foreground flex items-center gap-1"><Loader className="w-3 h-3 animate-spin" /> Loading</div>
+                ) : (
+                  (iconsTotal > 0 || selectedView === 'icons') ? (
+                    <div className="text-xs text-muted-foreground">{iconsTotal} icons</div>
+                  ) : null
+                )}
               </button>
               <button
                 onClick={() => { setSelectedCategory("All"); setSelectedView('illustrations') }}
@@ -361,7 +413,13 @@ export function DoodleDirectory() {
                 }`}
               >
                 <div className="font-medium">Illustrations</div>
-                <div className="text-xs text-muted-foreground">{allIllustrations.length} assets</div>
+                {loadingIllustrations ? (
+                  <div className="text-xs text-muted-foreground flex items-center gap-1"><Loader className="w-3 h-3 animate-spin" /> Loading</div>
+                ) : (
+                  (allIllustrations.length > 0 || selectedView === 'illustrations') ? (
+                    <div className="text-xs text-muted-foreground">{allIllustrations.length} assets</div>
+                  ) : null
+                )}
               </button>
             </div>
 
@@ -388,7 +446,9 @@ export function DoodleDirectory() {
                       }`}
                     >
                       <span className="font-medium">Candy Icons</span>
-                      <span className="text-xs text-muted-foreground">{candyIcons.length} icons</span>
+                      {(loadingIcons || candyIcons.length > 0 || selectedCategory === "Candy Icons" || selectedView === 'icons') && (
+                        <span className="text-xs text-muted-foreground">{candyIcons.length} icons</span>
+                      )}
                     </button>
 
                     {candyOpen && (
@@ -483,7 +543,7 @@ export function DoodleDirectory() {
                         {doodleSubcategories.map((cat) => (
                           <button
                             key={cat}
-                            onClick={() => { setSelectedCategory(cat); setSelectedView('doodles') }}
+                            onClick={() => { setSelectedCategory(cat); setSelectedView('doodles'); loadDoodleCategory('simple-doodles') }}
                             className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors pl-6 ${
                               selectedCategory === cat ? "bg-primary text-primary-foreground font-medium" : "hover:bg-muted text-foreground"
                             }`}
@@ -502,7 +562,7 @@ export function DoodleDirectory() {
                   {categories.filter((c) => c !== 'simple-doodles').map((category) => (
                     <button
                       key={category}
-                      onClick={() => { setSelectedCategory(category); setSelectedView('doodles') }}
+                      onClick={() => { setSelectedCategory(category); setSelectedView('doodles'); loadDoodleCategory(category) }}
                       className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
                         selectedCategory === category ? "bg-primary text-primary-foreground font-medium" : "hover:bg-muted text-foreground"
                       }`}
@@ -525,6 +585,7 @@ export function DoodleDirectory() {
             <div className="min-w-0">
               <h2 className="text-3xl font-bold tracking-tight mb-2 truncate">
                 {selectedView === 'icons' ? (selectedCategory === "All" ? "Icons" : selectedCategory) : selectedView === 'illustrations' ? (selectedCategory === "All" ? "Illustrations" : selectedCategory) : (selectedCategory === "All" ? "Discover All Doodles" : selectedCategory)}
+                {(selectedView === 'icons' && loadingIcons) || (selectedView === 'illustrations' && loadingIllustrations) || (selectedView === 'doodles' && loadingDoodles) ? <Loader className="inline-block w-4 h-4 animate-spin ml-2 text-muted-foreground" /> : null}
               </h2>
               <p className="text-muted-foreground">
                 Free, editable SVGs to spice up your designs. Showing {visibleItems.length} of {filteredItems.length} {selectedView === 'icons' ? "icons" : selectedView === 'illustrations' ? "illustrations" : "doodles"}.
@@ -546,7 +607,7 @@ export function DoodleDirectory() {
             </div>
           </div>
 
-          {loading ? (
+          {showLoadingPlaceholders ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
               {[...Array(12)].map((_, i) => (
                 <div key={i} className="aspect-square bg-muted animate-pulse rounded-xl" />
@@ -569,6 +630,19 @@ export function DoodleDirectory() {
                     onClick={() => { setSelectedDoodle(item) }}
                   />
                 ))}
+
+                {/* Inline small loading placeholders (rendered inside the main grid so they start right after the last card) */}
+                {isFetchingMore && (
+                  <>
+                    {[...Array(viewMode === "grid" ? 6 : 3)].map((_, i) => (
+                      viewMode === "grid" ? (
+                        <div key={`loading-${i}`} className="aspect-square bg-muted animate-pulse rounded-xl" />
+                      ) : (
+                        <div key={`loading-${i}`} className="h-12 bg-muted animate-pulse rounded-md" />
+                      )
+                    ))}
+                  </>
+                )}
               </div>
 
               {/* Sentinel / Loader */}
@@ -586,7 +660,7 @@ export function DoodleDirectory() {
             </>
           )}
 
-          {!loading && filteredItems.length === 0 && (
+          {!showLoadingPlaceholders && filteredItems.length === 0 && (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
                 <Search className="w-8 h-8 text-muted-foreground" />

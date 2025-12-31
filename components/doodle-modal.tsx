@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { X, Copy, Download, Check, Monitor, Smartphone, Tablet } from "lucide-react"
-import { GROUPED_ICONS } from "@/lib/data"
+import { useDoodles } from "@/hooks/use-doodles"
 import { convertSvgToFormat, type ExportFormat } from "@/lib/svg-utils"
 import { CustomDropdown } from "./custom-dropdown"
 
@@ -52,12 +52,14 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
     }
   }, [])
 
+  const { groupedIcons } = useDoodles()
+
   const variants = React.useMemo(() => {
     if (!currentDoodle) return []
 
     const prefOrder = ["LINED", "COLORED", "WHITE", "ICON", "BLACK"]
 
-    const group = GROUPED_ICONS.find((g: any) => g.id === currentDoodle.id)
+    const group = groupedIcons.find((g: any) => g.id === currentDoodle.id)
     if (group) {
       const arr = Object.entries(group.variants).map(([style, v]: any) => ({
         id: group.id,
