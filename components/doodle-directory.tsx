@@ -1,10 +1,13 @@
 "use client"
 
 import * as React from "react"
-import { Search, Grid, List, Loader } from "lucide-react"
-import { DoodleCard } from "@/components/doodle-card"
 import { DoodleModal } from "@/components/doodle-modal"
 import { DoodleSidebar } from "@/components/doodle-sidebar"
+import { DoodleDirectoryMobile } from "@/components/doodle-directory-mobile"
+import { DoodleDirectoryHeader } from "@/components/doodle-directory-header"
+import { DoodleDirectoryGrid } from "@/components/doodle-directory-grid"
+import { DoodleDirectoryEmpty } from "@/components/doodle-directory-empty"
+import { DoodleDirectoryTabs } from "@/components/doodle-directory-tabs"
 import { useDoodles } from "@/hooks/use-doodles"
 import type { Doodle } from "@/lib/data"
 
@@ -168,212 +171,30 @@ export function DoodleDirectory() {
     <div className="flex flex-col md:h-screen md:overflow-hidden">
 
 
-      {/* Mobile Category Bar */}
-      <div className="md:hidden sticky top-16 z-30 bg-background/95 backdrop-blur border-b">
-        <div className="px-4 py-2">
-          <div className="grid grid-cols-3 gap-2 mb-2">
-            <button
-              onClick={() => { setSelectedCategory("All"); setSelectedView('doodles') }}
-            className={`w-full text-center px-3 py-3 rounded-md text-sm transition-colors flex flex-col items-center ${
-                selectedView === 'doodles' ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 hover:bg-muted/20"
-              }`}
-            >
-              <div className="font-medium">Doodles</div>
-              {loadingDoodles ? (
-                <div className="text-xs text-muted-foreground flex items-center gap-1"><Loader className="w-3 h-3 animate-spin" /> Loading</div>
-              ) : (
-                <div className="text-xs text-muted-foreground">3951 assets</div>
-                // <div className="text-xs text-muted-foreground">{allDoodles.length} assets</div>
-              )}
-            </button>
-            <button
-              onClick={() => { setSelectedCategory("All"); setSelectedView('icons') }}
-              className={`w-full text-center px-3 py-3 rounded-md text-sm transition-colors flex flex-col items-center ${
-                selectedView === 'icons' ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 hover:bg-muted/20"
-              }`}
-            >
-              <div className="font-medium">Icons</div>
-              {loadingIcons ? (
-                <div className="text-xs text-muted-foreground flex items-center gap-1"><Loader className="w-3 h-3 animate-spin" /> Loading</div>
-              ) : (
-                (iconsTotal > 0 || selectedView === 'icons') ? (
-                  <div className="text-xs text-muted-foreground">5487 icons</div>
-                  // <div className="text-xs text-muted-foreground">{iconsTotal} icons</div>
-                ) : null
-              )}
-            </button>
-            <button
-              onClick={() => { setSelectedCategory("All"); setSelectedView('illustrations') }}
-              className={`w-full text-center px-3 py-3 rounded-md text-sm transition-colors flex flex-col items-center ${
-                selectedView === 'illustrations' ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 hover:bg-muted/20"
-              }`}
-            >
-              <div className="font-medium">Illustrations</div>
-              {loadingIllustrations ? (
-                <div className="text-xs text-muted-foreground flex items-center gap-1"><Loader className="w-3 h-3 animate-spin" /> Loading</div>
-              ) : (
-                (allIllustrations.length > 0 || selectedView === 'illustrations') ? (
-                  <div className="text-xs text-muted-foreground">899 assets</div>
-                  // <div className="text-xs text-muted-foreground">{allIllustrations.length} assets</div>
-                ) : null
-              )}
-            </button>
-          </div>
-
-          <div className="mb-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search doodles..."
-                className="w-full h-10 pl-10 pr-4 rounded-full bg-muted border-none focus:ring-2 focus:ring-primary text-sm"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </div>
-
-          {selectedView === 'icons' ? (
-            <div className="overflow-x-auto">
-              <div className="flex gap-2 whitespace-nowrap">
-                <>
-                  <button
-                    key="All"
-                    onClick={() => { setSelectedCategory("All"); setSelectedView('icons') }}
-                    className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-colors ${
-                      selectedCategory === "All" ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 text-foreground hover:bg-muted/20"
-                    }`}
-                  >
-                    All
-                  </button>
-
-                  <button
-                    key="Candy Icons"
-                    onClick={() => { setCandyOpen((s) => !s); setSelectedCategory("Candy Icons"); setSelectedView('icons') }}
-                    className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-colors ${
-                      selectedCategory === "Candy Icons" ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 text-foreground hover:bg-muted/20"
-                    }`}
-                  >
-                    Candy Icons
-                  </button>
-
-                  {candyOpen && (
-                    <div className="flex gap-2 whitespace-nowrap">
-                      {candyCategories.map((cat: string) => (
-                        <button
-                          key={`candy-${cat}`}
-                          onClick={() => { setSelectedCategory(cat); setSelectedView('icons') }}
-                          className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-colors pl-3 ${
-                            selectedCategory === cat ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 text-foreground hover:bg-muted/20"
-                          }`}
-                        >
-                          {cat
-                            .split("-")
-                            .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-                            .join(" ")}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  {iconTopCategories.map((category: string) => (
-                    <button
-                      key={category}
-                      onClick={() => { setSelectedCategory(category); setSelectedView('icons') }}
-                      className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-colors ${
-                        selectedCategory === category ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 text-foreground hover:bg-muted/20"
-                      }`}
-                    >
-                      {category
-                        .split("-")
-                        .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-                        .join(" ")}
-                    </button>
-                  ))}
-                </>
-              </div>
-            </div>
-          ) : selectedView === 'illustrations' ? (
-            <div className="overflow-x-auto">
-              <div className="flex gap-2 whitespace-nowrap">
-                {["All", ...illustrationCategories].map((category: string) => (
-                  <button
-                    key={category}
-                    onClick={() => { setSelectedCategory(category); setSelectedView('illustrations') }}
-                    className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-colors ${
-                      selectedCategory === category ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 text-foreground hover:bg-muted/20"
-                    }`}
-                  >
-                    {category
-                      .split("-")
-                      .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-                      .join(" ")}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <div className="flex gap-2 whitespace-nowrap">
-                <button
-                  key="All"
-                  onClick={() => { setSelectedCategory("All"); setSelectedView('doodles'); loadDoodleCategory('simple-doodles') }}
-                  className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-colors ${
-                    selectedCategory === "All" ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 text-foreground hover:bg-muted/20"
-                  }`}
-                >
-                  All
-                </button>
-
-                <button
-                  key="simple-doodles"
-                  onClick={() => { setSimpleOpen((s) => !s); setSelectedCategory('simple-doodles'); setSelectedView('doodles') }}
-                  className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-colors ${
-                    selectedCategory === "simple-doodles" ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 text-foreground hover:bg-muted/20"
-                  }`}
-                >
-                  Simple Doodles
-                </button>
-
-                {simpleOpen && (
-                  <>
-                    {doodleSubcategories.map((cat: string) => (
-                      <button
-                        key={`doodle-${cat}`}
-                        onClick={() => { setSelectedCategory(cat); setSelectedView('doodles') }}
-                        className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-colors pl-3 ${
-                          selectedCategory === cat ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 text-foreground hover:bg-muted/20"
-                        }`}
-                      >
-                        {cat
-                          .split("-")
-                          .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-                          .join(" ")}
-                      </button>
-                    ))}
-                  </>
-                )}
-
-                {/* render any other top-level categories if present */}
-                {categories.filter((c) => c !== 'simple-doodles').map((category: string) => (
-                  <button
-                    key={category}
-                    onClick={() => { setSelectedCategory(category); setSelectedView('doodles'); loadDoodleCategory(category) }}
-                    className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-colors ${
-                      selectedCategory === category ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 text-foreground hover:bg-muted/20"
-                    }`}
-                  >
-                    {category
-                      .split("-")
-                      .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-                      .join(" ")}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+      <DoodleDirectoryMobile
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        selectedView={selectedView}
+        setSelectedView={setSelectedView}
+        selectedCategory={selectedCategory}
+        setSelectedCategory={setSelectedCategory}
+        loadingDoodles={loadingDoodles}
+        loadingIcons={loadingIcons}
+        loadingIllustrations={loadingIllustrations}
+        iconsTotal={iconsTotal}
+        allDoodles={allDoodles}
+        allIllustrations={allIllustrations}
+        candyOpen={candyOpen}
+        setCandyOpen={setCandyOpen}
+        simpleOpen={simpleOpen}
+        setSimpleOpen={setSimpleOpen}
+        candyCategories={candyCategories}
+        doodleSubcategories={doodleSubcategories}
+        iconTopCategories={iconTopCategories}
+        illustrationCategories={illustrationCategories}
+        categories={categories}
+        loadDoodleCategory={loadDoodleCategory}
+      />
 
       <div className="flex-1 flex flex-col md:flex-row md:overflow-hidden">
 
@@ -404,153 +225,46 @@ export function DoodleDirectory() {
           loadDoodleCategory={loadDoodleCategory}
         />
 <div className="flex-1 flex flex-col md:overflow-hidden">
-  <div className="hidden md:grid md:grid-cols-3 gap-3 p-2 md:mt-4 md:mx-2 rounded-xl md:sticky md:top-4 md:z-30 md:backdrop-blur-sm md:border">
-          <button
-            onClick={() => { setSelectedCategory("All"); setSelectedView('doodles') }}
-            className={`w-full text-center px-3 py-2 rounded-lg text-sm transition-colors flex flex-col items-center gap-1 ${
-              selectedView === 'doodles' ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 hover:bg-muted/20"
-            }`}
-          >
-            <div className=" md:text-lg lg:font-semibold min-w-0 truncate text-xl">Doodles</div>
-            {loadingIcons ? (
-              <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1"><Loader className="w-3 h-3 animate-spin" /> <span className="ml-1">Loading</span></div>
-            ) : (
-              (allDoodles.length > 0 || selectedView === 'doodles') ? (
-                <span className="text-xs text-muted-foreground mt-1">{allDoodles.length} assets</span>
-              ) : <span className="text-xs text-muted-foreground mt-1">3951 icons</span>
-            )}
-          </button>
-          <button
-            onClick={() => { setSelectedCategory("All"); setSelectedView('icons') }}
-            className={`w-full text-center px-3 py-2 rounded-lg text-sm transition-colors flex flex-col items-center gap-1 ${
-              selectedView === 'icons' ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 hover:bg-muted/20"
-            }`}
-          >
-            <div className="md:text-lg md:font-semibold min-w-0 truncate text-xl">Icons</div>
-            {loadingIcons ? (
-              <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1"><Loader className="w-3 h-3 animate-spin" /> <span className="ml-1">Loading</span></div>
-            ) : (
-              (iconsTotal > 0 || selectedView === 'icons') ? (
-                <span className="text-xs text-muted-foreground mt-1">{iconsTotal} icons</span>
-              ) : <span className="text-xs text-muted-foreground mt-1">5487 icons</span>
-            )}
-          </button>
-          <button
-            onClick={() => { setSelectedCategory("All"); setSelectedView('illustrations') }}
-            className={`w-full text-center px-3 py-2 rounded-lg text-sm transition-colors flex flex-col items-center gap-1 ${
-              selectedView === 'illustrations' ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 hover:bg-muted/20"
-            }`}
-          >
-            <div className="md:text-lg md:font-semibold min-w-0 truncate text-xl">Illustrations</div>
-            {loadingIllustrations ? (
-              <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1"><Loader className="w-3 h-3 animate-spin" /> <span className="ml-1">Loading</span></div>
-            ) : (
-              (allIllustrations.length > 0 || selectedView === 'illustrations') ? (
-                <span className="text-xs text-muted-foreground mt-1">{allIllustrations.length} assets</span>
-              ) :   <span className="text-xs text-muted-foreground mt-1">899 assets</span>
-            )}
-          </button>
-        </div>
-        {/* Main Content */}
+    <DoodleDirectoryTabs
+      selectedView={selectedView}
+      setSelectedView={setSelectedView}
+      selectedCategory={selectedCategory}
+      setSelectedCategory={setSelectedCategory}
+      loadingDoodles={loadingDoodles}
+      loadingIcons={loadingIcons}
+      loadingIllustrations={loadingIllustrations}
+      allDoodles={allDoodles}
+      iconsTotal={iconsTotal}
+      allIllustrations={allIllustrations}
+    />
         <main ref={mainRef} className="flex-1 p-6 md:p-8 md:px-8 md:pt-4 scroll-mt-20 md:scroll-mt-16 flex flex-col md:overflow-auto">
 
-          <div className="mb-8 flex items-start justify-between gap-6">
-            <div className="min-w-0">
-              <h2 className="text-3xl font-bold tracking-tight mb-2 truncate">
-                {selectedView === 'icons' ? (selectedCategory === "All" ? "Icons" : selectedCategory) : selectedView === 'illustrations' ? (selectedCategory === "All" ? "Illustrations" : selectedCategory) : (selectedCategory === "All" ? "Discover All Doodles" : selectedCategory)}
-                {(selectedView === 'icons' && loadingIcons) || (selectedView === 'illustrations' && loadingIllustrations) || (selectedView === 'doodles' && loadingDoodles) ? <Loader className="inline-block w-4 h-4 animate-spin ml-2 text-muted-foreground" /> : null}
-              </h2>
-              <p className="text-muted-foreground">
-                Free, editable SVGs to spice up your designs. Showing {visibleItems.length} of {filteredItems.length} {selectedView === 'icons' ? "icons" : selectedView === 'illustrations' ? "illustrations" : "doodles"}.
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setViewMode("grid")}
-                className={`p-2 rounded-md transition-colors ${viewMode === "grid" ? "bg-secondary text-secondary-foreground" : "hover:bg-muted"}`}
-              >
-                <Grid className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => setViewMode("list")}
-                className={`p-2 rounded-md transition-colors ${viewMode === "list" ? "bg-secondary text-secondary-foreground" : "hover:bg-muted"}`}
-              >
-                <List className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
+          <DoodleDirectoryHeader
+            selectedView={selectedView}
+            selectedCategory={selectedCategory}
+            loadingDoodles={loadingDoodles}
+            loadingIcons={loadingIcons}
+            loadingIllustrations={loadingIllustrations}
+            visibleCount={visibleItems.length}
+            totalCount={filteredItems.length}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+          />
 
-          {showLoadingPlaceholders ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-              {[...Array(12)].map((_, i) => (
-                <div key={i} className="aspect-square bg-muted animate-pulse rounded-xl" />
-              ))}
-            </div>
-          ) : (
-            <>
-              <div
-                className={`grid ${
-                  viewMode === "grid" ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6" : "grid-cols-1"
-                } gap-4`}
-              >
-              {visibleItems.map((item: any, index: number) => (
-                  <DoodleCard
-                    key={`${item.id}-${item.category}-${item.subcategory ?? ''}-${item.style || ''}-${item.src ?? index}`}
-                    doodle={item}
-                    isCandy={candyIcons.some((c: any) => c.id === item.id && c.category === item.category)}
-                    allDoodles={selectedView === 'icons' ? allIcons : selectedView === 'illustrations' ? allIllustrations : allDoodles} // Use icon variants when in Icons view
-                    viewMode={viewMode}
-                    onClick={() => { setSelectedDoodle(item) }}
-                  />
-                ))}
-
-                {/* Inline small loading placeholders (rendered inside the main grid so they start right after the last card) */}
-                {isFetchingMore && (
-                  <>
-                    {[...Array(viewMode === "grid" ? 6 : 3)].map((_, i) => (
-                      viewMode === "grid" ? (
-                        <div key={`loading-${i}`} className="aspect-square bg-muted animate-pulse rounded-xl" />
-                      ) : (
-                        <div key={`loading-${i}`} className="h-12 bg-muted animate-pulse rounded-md" />
-                      )
-                    ))}
-                  </>
-                )}
-              </div>
-
-              {/* Sentinel / Loader */}
-              <div ref={sentinelRef as any} aria-hidden className="w-full flex items-center justify-center py-6">
-                {isFetchingMore ? (
-                  <div className="text-sm text-muted-foreground">Loading more...</div>
-                ) : visibleItems.length < filteredItems.length ? (
-                  <div className="text-sm text-muted-foreground">Scroll to load more</div>
-                ) : (
-                  <div className="text-sm text-muted-foreground">No more assets</div>
-                )}
-              </div>
-
-
-            </>
-          )}
+          <DoodleDirectoryGrid
+            showLoadingPlaceholders={showLoadingPlaceholders}
+            visibleItems={visibleItems}
+            isFetchingMore={isFetchingMore}
+            filteredLength={filteredItems.length}
+            viewMode={viewMode}
+            candyIcons={candyIcons}
+            setSelectedDoodle={(d) => setSelectedDoodle(d)}
+            allDoodlesParent={selectedView === 'icons' ? allIcons : selectedView === 'illustrations' ? allIllustrations : allDoodles}
+            sentinelRef={sentinelRef}
+          />
 
           {!showLoadingPlaceholders && filteredItems.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
-                <Search className="w-8 h-8 text-muted-foreground" />
-              </div>
-              <h3 className="text-lg font-semibold">No assets found</h3>
-              <p className="text-muted-foreground">Try adjusting your filters or search query.</p>
-              <button
-                onClick={() => {
-                  setSearchQuery("")
-                  setSelectedCategory("All")
-                  setSelectedView('doodles')
-                }}
-                className="mt-4 text-primary font-medium hover:underline"
-              >
-                Clear all filters
-              </button>
-            </div>
+            <DoodleDirectoryEmpty onClear={() => { setSearchQuery(""); setSelectedCategory("All"); setSelectedView('doodles') }} />
           )}
         </main>
 </div>
