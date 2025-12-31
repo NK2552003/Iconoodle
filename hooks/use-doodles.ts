@@ -4,6 +4,19 @@ import * as React from "react"
 import type { Doodle, GroupedIcon } from "@/lib/data"
 import type { IconVariant } from "@/lib/data"
 
+// Import icon sources statically so they are bundled into the production build
+import iconsJson from '@/lib/icons.json'
+import handdrawnIcons from '@/lib/handdrawn-icons.json'
+import handdrawnType2Icons from '@/lib/handdrawn-type-2-icons.json'
+import handmadeDoodledIcons from '@/lib/handmade-doodled-icons.json'
+import publicCoolicons from '@/lib/public-coolicons.json'
+import publicIconly from '@/lib/public-iconly.json'
+import publicSmooothIcons from '@/lib/public-smoooth-icons.json'
+import publicSocialMedia from '@/lib/public-social-media.json'
+import publicSocialMedia2 from '@/lib/public-social-media-2.json'
+import publicFluentIcons from '@/lib/public-fluent-icons.json'
+import candyIconsJson from '@/lib/candy-icons.json'
+
 export function useDoodles(): {
   doodles: Doodle[]
   allDoodles: Doodle[]
@@ -212,33 +225,47 @@ export function useDoodles(): {
     if (loadingIcons || groupedIcons.length > 0 || allIcons.length > 0) return
     setLoadingIcons(true)
     try {
-      const files = [
-        'icons.json',
-        'handdrawn-icons.json',
-        'handdrawn-type-2-icons.json',
-        'handmade-doodled-icons.json',
-        'public-coolicons.json',
-        'public-iconly.json',
-        'public-smoooth-icons.json',
-        'public-social-media.json',
-        'public-social-media-2.json',
-        'public-fluent-icons.json',
-      ]
+      const sources: Array<{ items: GroupedIcon[]; source: string }> = []
 
-      const mods = await Promise.all(files.map((f) => import(`@/lib/${f}`)))
-      const sources = mods.map((m, i) => ({ items: (m?.default || m) as GroupedIcon[], source: files[i].replace(/\.json$/, '') }))
+      // The static imports above guarantee these are available at build time in most bundlers.
+      // Wrap each in a try/catch to be defensive in case one file isn't present in the bundle.
+      try { sources.push({ items: (iconsJson as any) as GroupedIcon[], source: 'icons' }) } catch (e) { console.error('[useDoodles] icons.json missing', e) }
+      try { sources.push({ items: (handdrawnIcons as any) as GroupedIcon[], source: 'handdrawn-icons' }) } catch (e) { console.error('[useDoodles] handdrawn-icons.json missing', e) }
+      try { sources.push({ items: (handdrawnType2Icons as any) as GroupedIcon[], source: 'handdrawn-type-2-icons' }) } catch (e) { console.error('[useDoodles] handdrawn-type-2-icons.json missing', e) }
+      try { sources.push({ items: (handmadeDoodledIcons as any) as GroupedIcon[], source: 'handmade-doodled-icons' }) } catch (e) { console.error('[useDoodles] handmade-doodled-icons.json missing', e) }
+      try { sources.push({ items: (publicCoolicons as any) as GroupedIcon[], source: 'public-coolicons' }) } catch (e) { console.error('[useDoodles] public-coolicons.json missing', e) }
+      try { sources.push({ items: (publicIconly as any) as GroupedIcon[], source: 'public-iconly' }) } catch (e) { console.error('[useDoodles] public-iconly.json missing', e) }
+      try { sources.push({ items: (publicSmooothIcons as any) as GroupedIcon[], source: 'public-smoooth-icons' }) } catch (e) { console.error('[useDoodles] public-smoooth-icons.json missing', e) }
+      try { sources.push({ items: (publicSocialMedia as any) as GroupedIcon[], source: 'public-social-media' }) } catch (e) { console.error('[useDoodles] public-social-media.json missing', e) }
+      try { sources.push({ items: (publicSocialMedia2 as any) as GroupedIcon[], source: 'public-social-media-2' }) } catch (e) { console.error('[useDoodles] public-social-media-2.json missing', e) }
+      try { sources.push({ items: (publicFluentIcons as any) as GroupedIcon[], source: 'public-fluent-icons' }) } catch (e) { console.error('[useDoodles] public-fluent-icons.json missing', e) }
+
+      if (sources.length === 0) {
+        // nothing available — set empty arrays so UI shows 'No assets found' but avoid runtime crash
+        // eslint-disable-next-line no-console
+        console.error('[useDoodles] No icon sources available (static imports failed)')
+        setGroupedIcons([])
+        setAllIcons([])
+        setCandyIcons([])
+        return
+      }
+
       const merged = mergeGroupedSources(sources)
       setGroupedIcons(merged)
       setAllIcons(merged.flatMap((g) => Object.entries(g.variants).map(([style, v]) => ({ id: g.id, category: v.category, style, src: v.src, svg: v.svg, viewBox: v.viewBox }))))
 
-      // load candy icons too
+      // candy icons from static import
       try {
-        const candyMod = await import('@/lib/candy-icons.json')
-        const candy = (candyMod?.default || candyMod) as Doodle[]
+        const candy = (candyIconsJson as any) as Doodle[]
         setCandyIcons(Array.isArray(candy) ? candy : [])
       } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error('[useDoodles] Failed to parse candy-icons.json', e)
         setCandyIcons([])
       }
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('[useDoodles] Unexpected error while loading icons', e)
     } finally {
       setLoadingIcons(false)
     }
