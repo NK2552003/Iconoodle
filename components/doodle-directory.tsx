@@ -34,7 +34,7 @@ export function DoodleDirectory() {
   const filteredIcons = React.useMemo(() => {
     if (selectedView !== 'icons') return []
     const term = searchQuery.toLowerCase()
-    const matches = (item: any) => item.id.toLowerCase().includes(term) || item.category.toLowerCase().includes(term)
+    const matches = (item: any) => item.id.toLowerCase().includes(term) || (item.category || '').toLowerCase().includes(term)
 
     // Candy Icons parent: show all candy icons (and support their subcategories)
     if (selectedCategory === 'Candy Icons') {
@@ -63,7 +63,7 @@ export function DoodleDirectory() {
     return illustrations.filter((ill: Doodle) => {
       const matchesSearch =
         ill.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        ill.category.toLowerCase().includes(searchQuery.toLowerCase())
+        (ill.category || '').toLowerCase().includes(searchQuery.toLowerCase())
       const matchesCategory = selectedCategory === "All" || ill.category === selectedCategory
       return matchesSearch && matchesCategory
     })
