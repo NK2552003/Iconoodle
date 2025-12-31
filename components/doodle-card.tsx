@@ -11,6 +11,7 @@ interface DoodleCardProps {
   isCandy?: boolean
 }
 
+
 export function DoodleCard({ doodle, allDoodles, viewMode, onClick, isCandy }: DoodleCardProps) {
   const isGrid = viewMode === "grid"
   const [activeStyle, setActiveStyle] = React.useState(doodle.style)

@@ -27,7 +27,7 @@ export default function SiteHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-40 bg-background border-b border-border">
+    <header className="sticky top-0 z-40 bg-background border-b border-border md:hidden block ">
       <div className="md:mx-4 px-4 py-3 flex items-center justify-between gap-4">
         <Link href="/" className="flex items-center gap-3 no-underline">
           <span className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-accent text-accent-foreground shadow">
