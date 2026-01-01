@@ -75,7 +75,7 @@ export function DoodleSidebar({
 
   return (
     <aside className="hidden md:block w-full md:w-64 pl-4 py-4 shrink-0 md:sticky md:top-0 md:h-[calc(100vh)]">
-      <div className="bg-background/90 backdrop-blur border border-border rounded-xl px-4 pt-4 flex flex-col space-y-3 h-full overflow-hidden shadow-sm">
+      <div className="bg-background/90 backdrop-blur border border-border rounded-xl px-4 pt-4 flex flex-col space-y-3 h-full overflow-hidden">
           <Link href="/" className="flex flex-col items-center gap-1 mx-auto no-underline">
             <span className="inline-flex items-center justify-center w-20 h-20 rounded-lg text-accent-foreground">
               {/* Simple inline logo */}
