@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Star, Share2, Code } from 'lucide-react'
 
 const REPO = 'https://github.com/nk2552003/Iconoodle'
@@ -9,6 +9,22 @@ const SITE_URL = 'https://nk2552003.github.io/Iconoodle/'
 
 export default function SiteHeader() {
   const [feedback, setFeedback] = useState<string | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+
+  useEffect(() => {
+    const checkModalState = () => {
+      setIsModalOpen(document.body.getAttribute('data-modal-open') === 'true')
+    }
+    
+    // Check initially
+    checkModalState()
+    
+    // Set up a MutationObserver to watch for changes to body attributes
+    const observer = new MutationObserver(checkModalState)
+    observer.observe(document.body, { attributes: true, attributeFilter: ['data-modal-open'] })
+    
+    return () => observer.disconnect()
+  }, [])
 
   async function handleShare() {
     try {
@@ -27,7 +43,7 @@ export default function SiteHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-40 bg-background border-b border-border md:hidden block ">
+    <header className={`sticky top-0 bg-background border-b border-border md:hidden block z-10 transition-transform duration-200 ${isModalOpen ? '-translate-y-full' : 'translate-y-0'}`}>
       <div className="md:mx-4 px-4 py-3 flex items-center justify-between gap-4">
         <Link href="/" className="flex items-center gap-3 no-underline">
           <span className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-accent text-accent-foreground shadow">

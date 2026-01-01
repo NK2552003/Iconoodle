@@ -3,6 +3,7 @@
 import * as React from "react"
 import { X, Copy, Download, Check, Monitor, Smartphone, Tablet } from "lucide-react"
 import { useDoodles } from "@/hooks/use-doodles"
+import { useIsMobile } from "@/hooks/use-mobile"
 import { convertSvgToFormat, type ExportFormat } from "@/lib/svg-utils"
 import { CustomDropdown } from "./custom-dropdown"
 
@@ -22,7 +23,18 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
   const [copyFormat, setCopyFormat] = React.useState<ExportFormat>("SVG")
   const [downloadFormat, setDownloadFormat] = React.useState<ExportFormat>("SVG")
   const [codeFormat, setCodeFormat] = React.useState<ExportFormat>("SVG")
+  const isMobile = useIsMobile()
   const [isWhite, setIsWhite] = React.useState(false) // Declare isWhite variable
+  const [isSmallDevice, setIsSmallDevice] = React.useState(false)
+
+  React.useEffect(() => {
+    const checkDeviceSize = () => {
+      setIsSmallDevice(window.innerWidth <= 375 || window.innerHeight <= 667)
+    }
+    checkDeviceSize()
+    window.addEventListener("resize", checkDeviceSize)
+    return () => window.removeEventListener("resize", checkDeviceSize)
+  }, [])
 
   React.useEffect(() => {
     const update = () => {
@@ -45,10 +57,12 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
     const prevPaddingRight = document.body.style.paddingRight
     const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth
     document.body.style.overflow = 'hidden'
+    document.body.setAttribute('data-modal-open', 'true')
     if (scrollBarWidth) document.body.style.paddingRight = `${scrollBarWidth}px`
     return () => {
       document.body.style.overflow = prevOverflow
       document.body.style.paddingRight = prevPaddingRight
+      document.body.removeAttribute('data-modal-open')
     }
   }, [])
 
@@ -202,7 +216,7 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
   }, [currentDoodle, codeFormat, size])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div
         className="relative w-full max-w-[96vw] sm:max-w-4xl bg-background rounded-3xl border shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]"
         style={{ maxHeight: "calc(100vh - 40px)" }}
@@ -269,7 +283,7 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
               >
                {variants.length > 1 && (
                   <div
-                    className="md:hidden absolute left-3 top-1/2 -translate-y-1/2 flex flex-col gap-3 w-16 overflow-y-auto no-scrollbar p-2 items-center z-20 bg-background/70 rounded"
+                    className="md:hidden absolute left-3 top-1/2 -translate-y-1/2 flex flex-col gap-3 w-16 overflow-y-auto no-scrollbar p-2 items-center z-20 rounded"
                     style={
                       size === "100%" ? { height: "auto", maxHeight: "calc(100vh - 280px)" } : { height: displaySize }
                     }
@@ -295,8 +309,8 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
                 />
               </div>
             ) : (
-              <div className="w-full h-full bg-muted/50 rounded-xl p-4 overflow-auto">
-                <div className="mb-3 flex items-center gap-2 flex-end justify-end sticky top-0">
+              <div className={`w-full h-full bg-muted/50 rounded-xl p-4 flex flex-col overflow-hidden ${isSmallDevice ? "mt-36" : ""}`}>
+                <div className="mb-3 flex items-center gap-2 flex-end justify-end shrink-0">
                   <div className="flex items-center gap-2 border bg-background rounded-xl px-3 py-1">
                     <span className="text-sm text-muted-foreground">Format:</span>
                     <CustomDropdown
@@ -308,13 +322,13 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
                   </div>
                 </div>
 
-                <pre
-                  className="text-[10px] sm:text-xs font-mono text-muted-foreground whitespace-pre-wrap break-all max-h-4xl overflow-auto overscroll-contain"
-                  onWheel={(e) => e.stopPropagation()}
-                  onTouchMove={(e) => e.stopPropagation()}
-                >
-                  {formattedCode}
-                </pre>
+                <div className={`flex-1 min-h-0 ${isMobile ? "overflow-y-auto overflow-x-auto" : "overflow-y-auto"}`}>
+                  <pre
+                    className={`text-[10px] sm:text-xs font-mono text-muted-foreground ${isMobile ? "whitespace-pre" : "whitespace-pre-wrap break-all max-w-full"}`}
+                  >
+                    {formattedCode}
+                  </pre>
+                </div>
               </div>
             )}
           </div>
