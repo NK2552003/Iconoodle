@@ -43,7 +43,7 @@ export function DoodleDirectoryTabs({
         ) : (
           (allDoodles.length > 0 || selectedView === 'doodles') ? (
             <span className="text-xs text-muted-foreground mt-1">{allDoodles.length} assets</span>
-          ) : <span className="text-xs text-muted-foreground mt-1">3951 icons</span>
+          ) : <span className="text-xs text-muted-foreground mt-1">4280 icons</span>
         )}
       </button>
       <button
@@ -58,7 +58,7 @@ export function DoodleDirectoryTabs({
         ) : (
           (iconsTotal > 0 || selectedView === 'icons') ? (
             <span className="text-xs text-muted-foreground mt-1">{iconsTotal} icons</span>
-          ) : <span className="text-xs text-muted-foreground mt-1">5487 icons</span>
+          ) : <span className="text-xs text-muted-foreground mt-1">5565 icons</span>
         )}
       </button>
       <button
@@ -73,7 +73,7 @@ export function DoodleDirectoryTabs({
         ) : (
           (allIllustrations.length > 0 || selectedView === 'illustrations') ? (
             <span className="text-xs text-muted-foreground mt-1">{allIllustrations.length} assets</span>
-          ) :   <span className="text-xs text-muted-foreground mt-1">899 assets</span>
+          ) :   <span className="text-xs text-muted-foreground mt-1">1024 assets</span>
         )}
       </button>
     </div>

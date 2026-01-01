@@ -16,6 +16,8 @@ import publicSocialMedia from '@/lib/public-social-media.json'
 import publicSocialMedia2 from '@/lib/public-social-media-2.json'
 import publicFluentIcons from '@/lib/public-fluent-icons.json'
 import candyIconsJson from '@/lib/candy-icons.json'
+import carsIcons from '@/lib/cars-icons.json'
+import naturalStampingElements from '@/lib/natural-stamping-elements.json'
 
 export function useDoodles(): {
   doodles: Doodle[]
@@ -80,6 +82,9 @@ export function useDoodles(): {
     { name: 'doodles-the-doodle-library', path: 'doodles-the-doodle-library.json' },
     { name: 'doodles-3', path: 'doodles-3.json' },
     { name: 'nature-doodles', path: 'nature-doodles.json' },
+    { name: '3d-like-shape-doodles', path: '3d-like-shape-doodles.json' },
+    { name: 'wireframe-doodles', path: 'wireframe-doodles.json' },
+    { name: 'brutalist-doodles', path: 'brutalist-doodles.json' },
   ]
   const DOODLE_CATEGORIES = FILES.map((f) => f.name)
 
@@ -101,7 +106,19 @@ export function useDoodles(): {
         items = arr.map((d) => ({ ...(d || {}), subcategory: d?.category, category: 'simple-doodles' })) as Doodle[]
       } else {
         // force top-level category to the file name so filtering by sidebar category works reliably
-        items = arr.map((d) => ({ ...(d || {}), category: entry.name })) as Doodle[]
+        // If the file is a grouped-icon style (has `variants`), flatten variants into Doodle[] entries
+        if (arr.length && (arr[0] as any).variants) {
+          items = arr.flatMap((g: any) => Object.entries(g.variants || {}).map(([style, v]: any) => ({
+            id: g.id,
+            category: entry.name,
+            style: v.style ?? style,
+            src: v.src ?? '',
+            svg: v.svg ?? '',
+            viewBox: v.viewBox ?? '',
+          }))) as Doodle[]
+        } else {
+          items = arr.map((d) => ({ ...(d || {}), category: entry.name })) as Doodle[]
+        }
       }
 
       setLoadedDoodleMap((prev) => new Map(prev).set(name, items))
@@ -244,6 +261,8 @@ export function useDoodles(): {
       try { sources.push({ items: (publicSocialMedia as any) as GroupedIcon[], source: 'public-social-media' }) } catch (e) { console.error('[useDoodles] public-social-media.json missing', e) }
       try { sources.push({ items: (publicSocialMedia2 as any) as GroupedIcon[], source: 'public-social-media-2' }) } catch (e) { console.error('[useDoodles] public-social-media-2.json missing', e) }
       try { sources.push({ items: (publicFluentIcons as any) as GroupedIcon[], source: 'public-fluent-icons' }) } catch (e) { console.error('[useDoodles] public-fluent-icons.json missing', e) }
+      try { sources.push({ items: (carsIcons as any) as GroupedIcon[], source: 'cars-icons' }) } catch (e) { console.error('[useDoodles] cars-icons.json missing', e) }
+      try { sources.push({ items: (naturalStampingElements as any) as GroupedIcon[], source: 'natural-stamping-elements' }) } catch (e) { console.error('[useDoodles] natural-stamping-elements.json missing', e) }
 
       if (sources.length === 0) {
         // nothing available — set empty arrays so UI shows 'No assets found' but avoid runtime crash
@@ -281,8 +300,8 @@ export function useDoodles(): {
     if (loadingIllustrations || loadedIllustrations) return
     setLoadingIllustrations(true)
     try {
-      const mod = await import('@/lib/illustrations.json')
-      const arr = (mod?.default || mod) as Doodle[]
+      const mod = await import('@/lib/data')
+      const arr = (mod?.ILLUSTRATIONS || []) as Doodle[]
       setIllustrations(Array.isArray(arr) ? arr : [])
       setLoadedIllustrations(true)
     } finally {

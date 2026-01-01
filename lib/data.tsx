@@ -45,13 +45,20 @@ import handdrawnIcons from './handdrawn-icons.json'
 import handdrawnType2Icons from './handdrawn-type-2-icons.json'
 import handmadeDoodledIcons from './handmade-doodled-icons.json'
 import illustrations from './illustrations.json' 
-// Public folder generated per-subfolder JSONs
 import publicCoolicons from './public-coolicons.json'
 import publicIconly from './public-iconly.json'
 import publicSmooothIcons from './public-smoooth-icons.json'
 import publicSocialMedia from './public-social-media.json'
 import publicSocialMedia2 from './public-social-media-2.json'
 import publicFluentIcons from './public-fluent-icons.json'
+import threeDLikeShapeDoodles from './3d-like-shape-doodles.json'
+import carsIcons from './cars-icons.json'
+import naturalStampingElements from './natural-stamping-elements.json'
+import christmasIllustration from './christmas-illustration.json'
+import funnyCharacterIllustrations from './funny-character-illustrations.json'
+import racingIllustrations from './racing-illustrations.json'
+import valentinesIllustration from './valentines-illustration.json'
+import wireframeDoodles from './wireframe-doodles.json'
 
 // Normalize only the core `doodles.json` into top-level `simple-doodles` (keep its original category as `subcategory`)
 // All other `doodles-*` files remain as their own top-level categories
@@ -59,6 +66,7 @@ const _toSimple = (arr: any[] | undefined) => (arr || []).map((d: any) => ({ ...
 const _asArray = (arr: any[] | undefined) => arr || []
 // Ensure files that don't include a top-level `category` get one (used for sidebar grouping)
 const _withCategory = (arr: any[] | undefined, cat: string) => (arr || []).map((d: any) => ({ ...(d || {}), category: d?.category ?? cat }))
+
 
 export const DOODLES: Doodle[] = [
   ..._toSimple(doodles as Doodle[]),
@@ -78,6 +86,8 @@ export const DOODLES: Doodle[] = [
   ..._asArray((doodlesTheDoodleLibrary as unknown) as Doodle[]),
   ..._withCategory((doodles3 as unknown) as Doodle[], 'doodles-3'),
   ..._withCategory((natureDoodles as unknown) as Doodle[], 'nature-doodles'),
+  ..._withCategory((threeDLikeShapeDoodles as unknown) as Doodle[], '3d-like-shape-doodles'),
+  ..._withCategory((wireframeDoodles as unknown) as Doodle[], 'wireframe-doodles'),
 ] as Doodle[]
 
 // Keep backward-compatible flat array available as `ICONS` for components that expect it
@@ -94,6 +104,8 @@ const sources: Array<{ items: GroupedIcon[]; source: string }> = [
   { items: ((publicSocialMedia as unknown) as GroupedIcon[]), source: 'public-social-media' },
   { items: ((publicSocialMedia2 as unknown) as GroupedIcon[]), source: 'public-social-media-2' },
   { items: ((publicFluentIcons as unknown) as GroupedIcon[]), source: 'public-fluent-icons' },
+  { items: (carsIcons as unknown) as GroupedIcon[], source: 'cars-icons' },
+  { items: (naturalStampingElements as unknown) as GroupedIcon[], source: 'natural-stamping-elements' },
 ]
 
 const merged = new Map<string, GroupedIcon>()
@@ -137,4 +149,27 @@ export const ICONS: Doodle[] = GROUPED_ICONS.flatMap((g) =>
 // Candy Icons (flat list) — used as a separate icon set
 export const CANDY_ICONS: Doodle[] = (candyIcons as unknown) as Doodle[]
 
-export const ILLUSTRATIONS: Doodle[] = (illustrations as unknown) as Doodle[]
+// Normalize illustration imports (handle both flat Doodle[] and grouped-style sources with `variants`)
+const _toDoodleArray = (arr: any[] | undefined, defaultCat?: string) => {
+  if (!arr) return []
+  // grouped format (id + variants)
+  if (arr.length && (arr[0] as any).variants) {
+    return (arr as any[]).flatMap((g: any) => Object.entries(g.variants || {}).map(([style, v]: any) => ({
+      id: g.id,
+      category: g.category ?? defaultCat ?? '',
+      style: v.style ?? style,
+      src: v.src ?? '',
+      svg: v.svg ?? '',
+      viewBox: v.viewBox ?? '',
+    }))) as Doodle[]
+  }
+  return arr as Doodle[]
+}
+
+export const ILLUSTRATIONS: Doodle[] = [
+  ..._toDoodleArray((illustrations as unknown) as any[],'illustrations'),
+  ..._toDoodleArray((christmasIllustration as unknown) as any[],'christmas-illustration'),
+  ..._toDoodleArray((funnyCharacterIllustrations as unknown) as any[],'funny-character-illustrations'),
+  ..._toDoodleArray((racingIllustrations as unknown) as any[],'racing-illustrations'),
+  ..._toDoodleArray((valentinesIllustration as unknown) as any[],'valentines-illustration'),
+] as Doodle[]
