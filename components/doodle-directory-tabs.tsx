@@ -30,10 +30,9 @@ export function DoodleDirectoryTabs({
   allIllustrations,
 }: TabsProps) {
   return (
-    <div className="hidden md:grid md:grid-cols-3 gap-3 p-2 md:mt-4 md:mx-2 rounded-xl md:sticky md:top-4 md:z-30 md:backdrop-blur-sm md:border">
-      <button
+   <div className="hidden md:grid md:grid-cols-3 gap-3 p-2 md:mt-4 md:mx-2 rounded-xl md:sticky md:top-4 md:z-30 md:backdrop-blur-sm md:border md:shadow-[0_10px_20px_rgba(2,6,23,0.08)]">      <button
         onClick={() => { setSelectedCategory("All"); setSelectedView('doodles') }}
-        className={`w-full text-center px-3 py-2 rounded-lg text-sm transition-colors flex flex-col items-center gap-1 ${
+        className={`w-full text-center px-3 py-2 rounded-lg text-sm transition-colors flex flex-col items-center gap-1 border border-border/50 ${
           selectedView === 'doodles' ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 hover:bg-muted/20"
         }`}
       >
@@ -48,7 +47,7 @@ export function DoodleDirectoryTabs({
       </button>
       <button
         onClick={() => { setSelectedCategory("All"); setSelectedView('icons') }}
-        className={`w-full text-center px-3 py-2 rounded-lg text-sm transition-colors flex flex-col items-center gap-1 ${
+        className={`w-full text-center px-3 py-2 rounded-lg text-sm transition-colors flex flex-col items-center gap-1 border border-border/50 ${
           selectedView === 'icons' ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 hover:bg-muted/20"
         }`}
       >
@@ -63,7 +62,7 @@ export function DoodleDirectoryTabs({
       </button>
       <button
         onClick={() => { setSelectedCategory("All"); setSelectedView('illustrations') }}
-        className={`w-full text-center px-3 py-2 rounded-lg text-sm transition-colors flex flex-col items-center gap-1 ${
+        className={`w-full text-center px-3 py-2 rounded-lg text-sm transition-colors flex flex-col items-center gap-1 border border-border/50 ${
           selectedView === 'illustrations' ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 hover:bg-muted/20"
         }`}
       >

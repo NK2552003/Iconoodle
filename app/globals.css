@@ -4,39 +4,57 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: oklch(0.98 0.01 250);
-  --foreground: oklch(0.15 0.02 250);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.15 0.02 250);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.15 0.02 250);
-  --primary: oklch(0.2 0.02 250);
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.92 0.02 250);
-  --secondary-foreground: oklch(0.2 0.02 250);
-  --muted: oklch(0.95 0.01 250);
-  --muted-foreground: oklch(0.5 0.02 250);
-  --accent: oklch(0.92 0.02 250);
-  --accent-foreground: oklch(0.2 0.02 250);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.577 0.245 27.325);
-  --border: oklch(0.9 0.01 250);
-  --input: oklch(0.9 0.01 250);
-  --ring: oklch(0.2 0.02 250);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
+  /* Base paper background - neutral white/gray */
+  --background: oklch(0.98 0.002 0);
+  --foreground: oklch(0.15 0.005 0);
+
+  /* Surfaces */
+  --card: oklch(0.97 0.003 0);
+  --card-foreground: oklch(0.12 0.008 0);
+  --popover: oklch(0.98 0.002 0);
+  --popover-foreground: oklch(0.12 0.008 0);
+
+  /* Primary ink-like tone */
+  --primary: oklch(0.22 0.01 0);
+  --primary-foreground: oklch(0.99 0.001 0);
+
+  /* Secondary & muted paper layers */
+  --secondary: oklch(0.92 0.008 0);
+  --secondary-foreground: oklch(0.18 0.015 0);
+  --muted: oklch(0.94 0.005 0);
+  --muted-foreground: oklch(0.42 0.008 0);
+
+  /* Accent (subtle highlight) */
+  --accent: oklch(0.90 0.012 220);
+  --accent-foreground: oklch(0.18 0.015 0);
+
+  /* Destructive (kept readable on paper) */
+  --destructive: oklch(0.62 0.22 30);
+  --destructive-foreground: oklch(0.99 0.001 0);
+
+  /* Borders & inputs (very soft pencil lines) */
+  --border: oklch(0.88 0.005 0);
+  --input: oklch(0.88 0.005 0);
+  --ring: oklch(0.30 0.025 0);
+
+  /* Charts (neutral academic palette) */
+  --chart-1: oklch(0.55 0.15 230);
+  --chart-2: oklch(0.58 0.12 140);
+  --chart-3: oklch(0.42 0.08 280);
+  --chart-4: oklch(0.65 0.14 45);
+  --chart-5: oklch(0.52 0.12 330);
+
   --radius: 1.25rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+
+  /* Sidebar (slightly darker paper) */
+  --sidebar: oklch(0.97 0.002 0);
+  --sidebar-foreground: oklch(0.15 0.005 0);
+  --sidebar-primary: oklch(0.25 0.015 0);
+  --sidebar-primary-foreground: oklch(0.99 0.001 0);
+  --sidebar-accent: oklch(0.93 0.005 0);
+  --sidebar-accent-foreground: oklch(0.25 0.015 0);
+  --sidebar-border: oklch(0.89 0.003 0);
+  --sidebar-ring: oklch(0.6 0.02 0);
 }
 
 .dark {
@@ -144,6 +162,36 @@ html, body, :root {
   }
   body {
     @apply bg-background text-foreground;
+    position: relative;
+  }
+  
+  /* Doodle background pattern */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0.03;
+    z-index: 0;
+    pointer-events: none;
+    background-image: 
+      url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 30 Q 25 25 30 30 T 40 30' stroke='%23000' fill='none' stroke-width='1.5'/%3E%3Ccircle cx='160' cy='40' r='8' stroke='%23000' fill='none' stroke-width='1.5'/%3E%3Cpath d='M50 150 L 60 160 L 50 170 L 40 160 Z' stroke='%23000' fill='none' stroke-width='1.5'/%3E%3Cpath d='M140 120 L 155 120 L 155 135 L 140 135 Z' stroke='%23000' fill='none' stroke-width='1.5'/%3E%3Cpath d='M100 80 L 110 70 L 120 80 L 110 90 Z' stroke='%23000' fill='none' stroke-width='1.5'/%3E%3Cpath d='M170 150 Q 175 145 180 150 Q 185 155 180 160 Q 175 165 170 160 Q 165 155 170 150' stroke='%23000' fill='none' stroke-width='1.5'/%3E%3Cpath d='M30 100 L 40 100 M 35 95 L 35 105' stroke='%23000' fill='none' stroke-width='1.5'/%3E%3Cpath d='M120 180 L 125 175 L 130 180 L 125 185 L 120 180' stroke='%23000' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");
+    background-size: 200px 200px;
+    background-repeat: repeat;
+  }
+  
+  .dark body::before {
+    opacity: 0.02;
+    background-image: 
+      url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 30 Q 25 25 30 30 T 40 30' stroke='%23fff' fill='none' stroke-width='1.5'/%3E%3Ccircle cx='160' cy='40' r='8' stroke='%23fff' fill='none' stroke-width='1.5'/%3E%3Cpath d='M50 150 L 60 160 L 50 170 L 40 160 Z' stroke='%23fff' fill='none' stroke-width='1.5'/%3E%3Cpath d='M140 120 L 155 120 L 155 135 L 140 135 Z' stroke='%23fff' fill='none' stroke-width='1.5'/%3E%3Cpath d='M100 80 L 110 70 L 120 80 L 110 90 Z' stroke='%23fff' fill='none' stroke-width='1.5'/%3E%3Cpath d='M170 150 Q 175 145 180 150 Q 185 155 180 160 Q 175 165 170 160 Q 165 155 170 150' stroke='%23fff' fill='none' stroke-width='1.5'/%3E%3Cpath d='M30 100 L 40 100 M 35 95 L 35 105' stroke='%23fff' fill='none' stroke-width='1.5'/%3E%3Cpath d='M120 180 L 125 175 L 130 180 L 125 185 L 120 180' stroke='%23fff' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");
+  }
+  
+  /* Ensure content is above the doodle layer */
+  body > * {
+    position: relative;
+    z-index: 1;
   }
 
   /* Ensure inline SVGs scale up to fill grid cards nicely */
