@@ -44,8 +44,10 @@ export function useDoodles(): {
   loadIllustrations: () => Promise<void>
   loadingIllustrations: boolean
 } {
-  // UI should render immediately — doodles load on demand
-  const [loading, setLoading] = React.useState(false)
+  // UI should render immediately but avoid showing the empty state before data loads
+  // Keep `loading` true until at least one doodle category has been loaded to prevent
+  // an initial flash of the "No assets found" empty state.
+  const [loading, setLoading] = React.useState(true)
 
   // We'll load DOODLES on demand (they contain full SVG strings & are large)
   const [categories, setCategories] = React.useState<string[]>([])
@@ -105,6 +107,8 @@ export function useDoodles(): {
       setLoadedDoodleMap((prev) => new Map(prev).set(name, items))
       setLoadedDoodleOrder((prev) => (prev.includes(name) ? prev : [...prev, name]))
       setLoadedDoodles(true)
+      // First successful category load means we have assets — clear the initial loading flag
+      setLoading(false)
     } finally {
       // unmark loading for this category
       setLoadingDoodleCategories((prev) => {
@@ -112,6 +116,8 @@ export function useDoodles(): {
         n.delete(name)
         return n
       })
+      // clear initial loading flag if still set to avoid permanent placeholders on error
+      setLoading(false)
     }
   }, [loadedDoodleMap, loadingDoodleCategories])
 
@@ -126,8 +132,7 @@ export function useDoodles(): {
   // Initialize UI quickly: populate categories so sidebar renders instantly
   React.useEffect(() => {
     setCategories(DOODLE_CATEGORIES.slice())
-    const t = setTimeout(() => setLoading(false), 20)
-    return () => clearTimeout(t)
+    // Keep `loading` true until the first doodle category is actually loaded
   }, [])
 
   // All doodles are the concatenation of loaded categories in the chosen order

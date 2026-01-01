@@ -135,7 +135,7 @@ export function DoodleSidebar({
 
             <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Categories</h3>
 
-        <div className="flex-1 min-h-0 overflow-y-auto pr-1">
+        <div className="flex-1 min-h-0 overflow-y-auto pr-1 pb-4">
         {selectedView === 'icons' ? (
           <section>
             <div className="space-y-1">

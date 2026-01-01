@@ -42,8 +42,10 @@ export function DoodleCard({ doodle, allDoodles, viewMode, onClick, isCandy }: D
   const lowerCat = ((doodle?.category || doodle?.subcategory) || '').toLowerCase()
   const hasWhiteVariant = allDoodles.some((d) => d.id === doodle.id && d.style === 'WHITE')
   const isEducationalCategory = lowerCat.includes('educational') || lowerCat.includes('education')
+  // Treat any category that contains the fast-food identifier as a black-background category
   const isBlackBackgroundCategory = isGrid && (
-    ['coolicons', 'fast-food-doodle-art'].includes(lowerCat) ||
+    lowerCat.includes('coolicons') ||
+    lowerCat.includes('fast-food-doodle-art') ||
     (isEducationalCategory && (hasWhiteVariant || currentDoodle?.style === 'WHITE'))
   )
 
