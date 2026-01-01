@@ -278,10 +278,14 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
                       <button
                         key={v.style}
                         onClick={() => currentDoodle.style !== v.style && setCurrentDoodle(v)}
-                        className={`w-12 h-12 flex items-center justify-center p-1 rounded-md transition-all ${currentDoodle.style === v.style ? "ring-1 ring-primary" : "opacity-70 hover:opacity-100"}`}
+                        className={`w-12 h-12 flex items-center justify-center p-2 rounded-md transition-all overflow-hidden ${currentDoodle.style === v.style ? "ring-1 ring-primary" : "opacity-70 hover:opacity-100"}`}
                         aria-label={`${v.style} variant`}
-                        dangerouslySetInnerHTML={{ __html: v.svg }}
-                      />
+                      >
+                        <div
+                          className="w-full h-full flex items-center justify-center [&>svg]:max-w-full [&>svg]:max-h-full [&>svg]:w-auto [&>svg]:h-auto"
+                          dangerouslySetInnerHTML={{ __html: v.svg }}
+                        />
+                      </button>
                     ))}
                   </div>
                 )}
