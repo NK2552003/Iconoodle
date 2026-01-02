@@ -3,31 +3,7 @@
 import * as React from "react"
 import { Search, Loader } from "lucide-react"
 import type { Doodle } from "@/lib/data"
-
-export interface MobileProps {
-  searchQuery: string
-  setSearchQuery: (v: string) => void
-  selectedView: 'doodles' | 'icons' | 'illustrations'
-  setSelectedView: (v: 'doodles' | 'icons' | 'illustrations') => void
-  selectedCategory: string
-  setSelectedCategory: (c: string) => void
-  loadingDoodles: boolean
-  loadingIcons: boolean
-  loadingIllustrations: boolean
-  iconsTotal: number
-  allDoodles: Doodle[]
-  allIllustrations: Doodle[]
-  candyOpen: boolean
-  setCandyOpen: React.Dispatch<React.SetStateAction<boolean>>
-  simpleOpen: boolean
-  setSimpleOpen: React.Dispatch<React.SetStateAction<boolean>>
-  candyCategories: string[]
-  doodleSubcategories: string[]
-  iconTopCategories: string[]
-  illustrationCategories: string[]
-  categories: string[]
-  loadDoodleCategory: (name: string) => void
-}
+import type { MobileProps } from "@/lib/types"
 
 export function DoodleDirectoryMobile({
   searchQuery,

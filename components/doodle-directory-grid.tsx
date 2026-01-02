@@ -4,20 +4,7 @@ import * as React from "react"
 import { Search } from "lucide-react"
 import { DoodleCard } from "@/components/doodle-card"
 import type { Doodle } from "@/lib/data"
-
-interface GridProps {
-  showLoadingPlaceholders: boolean
-  visibleItems: any[]
-  isFetchingMore: boolean
-  filteredLength: number
-  viewMode: "grid" | "list"
-  candyIcons: any[]
-  setSelectedDoodle: (d: Doodle) => void
-  /** optional array to pass through as the allDoodles prop for each card */
-  allDoodlesParent?: any[]
-  /** sentinel ref used by parent or null if parent manages observer */
-  sentinelRef?: React.RefObject<HTMLDivElement | null>
-}
+import type { GridProps } from "@/lib/types"
 
 export function DoodleDirectoryGrid({ showLoadingPlaceholders, visibleItems, isFetchingMore, filteredLength, viewMode, candyIcons, setSelectedDoodle, allDoodlesParent, sentinelRef }: GridProps) {
   if (showLoadingPlaceholders) {

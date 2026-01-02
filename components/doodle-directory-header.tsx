@@ -2,18 +2,7 @@
 
 import * as React from "react"
 import { Grid, List, Loader } from "lucide-react"
-
-interface HeaderProps {
-  selectedView: 'doodles' | 'icons' | 'illustrations'
-  selectedCategory: string
-  loadingDoodles: boolean
-  loadingIcons: boolean
-  loadingIllustrations: boolean
-  visibleCount: number
-  totalCount: number
-  viewMode: "grid" | "list"
-  setViewMode: (m: "grid" | "list") => void
-}
+import type { HeaderProps } from "@/lib/types"
 
 export function DoodleDirectoryHeader({ selectedView, selectedCategory, loadingDoodles, loadingIcons, loadingIllustrations, visibleCount, totalCount, viewMode, setViewMode }: HeaderProps) {
   return (
