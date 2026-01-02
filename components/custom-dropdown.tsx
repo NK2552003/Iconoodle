@@ -46,12 +46,33 @@ export function CustomDropdown({ options, value, onChange, triggerClassName }: C
     if (!el) return
     const rect = el.getBoundingClientRect()
     const menuWidth = 192 // w-48
+    const menuHeight = options.length * 40 + 8 // approximate height (py-1 + items)
+    
+    // Calculate horizontal position
     let left = rect.right - menuWidth
     if (left < 8) left = rect.left
-    if (left + menuWidth > window.innerWidth - 8) left = Math.max(8, window.innerWidth - menuWidth - 8)
-    const top = rect.bottom + 8
+    if (left + menuWidth > window.innerWidth - 8) {
+      left = Math.max(8, window.innerWidth - menuWidth - 8)
+    }
+    
+    // Calculate vertical position with viewport constraint
+    let top = rect.bottom + 8
+    const spaceBelow = window.innerHeight - rect.bottom
+    const spaceAbove = rect.top
+    
+    // If not enough space below and more space above, open upward
+    if (spaceBelow < menuHeight + 16 && spaceAbove > spaceBelow) {
+      top = rect.top - menuHeight - 8
+    }
+    
+    // Ensure menu stays within viewport
+    if (top < 8) top = 8
+    if (top + menuHeight > window.innerHeight - 8) {
+      top = Math.max(8, window.innerHeight - menuHeight - 8)
+    }
+    
     setMenuPos({ top: Math.round(top + window.scrollY), left: Math.round(left + window.scrollX) })
-  }, [isOpen])
+  }, [isOpen, options.length])
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -70,8 +91,15 @@ export function CustomDropdown({ options, value, onChange, triggerClassName }: C
         ? createPortal(
             <div
               ref={menuRef}
-              style={{ position: "absolute", top: `${menuPos.top}px`, left: `${menuPos.left}px`, width: 192 }}
-              className="bg-background border rounded-xl shadow-xl z-60 py-1 animate-in fade-in zoom-in-95 duration-100"
+              style={{ 
+                position: "absolute", 
+                top: `${menuPos.top}px`, 
+                left: `${menuPos.left}px`, 
+                width: 192,
+                maxHeight: 'calc(100vh - 16px)',
+                overflowY: 'auto'
+              }}
+              className="bg-background border rounded-xl shadow-xl z-[9999] py-1 animate-in fade-in zoom-in-95 duration-100"
             >
               {options.map((option) => (
                 <button
