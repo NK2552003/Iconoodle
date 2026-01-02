@@ -4,18 +4,7 @@ import * as React from "react"
 import { createPortal } from "react-dom"
 import { ChevronDown, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
-
-interface DropdownOption {
-  label: string
-  value: string
-}
-
-interface CustomDropdownProps {
-  options: DropdownOption[]
-  value: string
-  onChange: (value: any) => void
-  triggerClassName?: string
-}
+import type { DropdownOption, CustomDropdownProps } from "@/lib/types"
 
 export function CustomDropdown({ options, value, onChange, triggerClassName }: CustomDropdownProps) {
   const [isOpen, setIsOpen] = React.useState(false)
@@ -99,7 +88,7 @@ export function CustomDropdown({ options, value, onChange, triggerClassName }: C
                 maxHeight: 'calc(100vh - 16px)',
                 overflowY: 'auto'
               }}
-              className="bg-background border rounded-xl shadow-xl z-[9999] py-1 animate-in fade-in zoom-in-95 duration-100"
+              className="bg-background border rounded-xl shadow-xl z-9999 py-1 animate-in fade-in zoom-in-95 duration-100"
             >
               {options.map((option) => (
                 <button

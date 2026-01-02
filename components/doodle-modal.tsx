@@ -1,18 +1,18 @@
 "use client"
 
 import * as React from "react"
-import { X, Copy, Download, Check, Monitor, Smartphone, Tablet } from "lucide-react"
+import { X } from "lucide-react"
 import { useDoodles } from "@/hooks/use-doodles"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { convertSvgToFormat, type ExportFormat } from "@/lib/svg-utils"
-import { CustomDropdown } from "./custom-dropdown"
-
-
-interface DoodleModalProps {
-  doodle: any
-  onClose: () => void
-  allDoodles: any[]
-}
+import { EXPORT_FORMATS, EXTENSION_MAP, MIME_MAP, VARIANT_STYLE_ORDER } from "@/lib/constants"
+import type { DoodleModalProps } from "@/lib/types"
+import { DoodleModalPreview } from "./doodle-modal-preview"
+import { DoodleModalCode } from "./doodle-modal-code"
+import { DoodleModalActions } from "./doodle-modal-actions"
+import { DoodleModalInfo } from "./doodle-modal-info"
+import { DoodleModalVariants } from "./doodle-modal-variants"
+import { DoodleModalTabs, DoodleModalFooter } from "./doodle-modal-tabs"
 
 export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
   const [copied, setCopied] = React.useState(false)
@@ -71,7 +71,7 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
   const variants = React.useMemo(() => {
     if (!currentDoodle) return []
 
-    const prefOrder = ["LINED", "COLORED", "WHITE", "ICON", "BLACK"]
+    const prefOrder = [...VARIANT_STYLE_ORDER] as string[]
 
     const group = groupedIcons.find((g: any) => g.id === currentDoodle.id)
     if (group) {
@@ -163,49 +163,18 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
     const sized = getSizedSvg(currentDoodle.svg, false)
     const formattedCode = convertSvgToFormat(sized, format, currentDoodle.id)
 
-    const extensionMap: Record<ExportFormat, string> = {
-      SVG: "svg",
-      TSX: "tsx",
-      JSX: "jsx",
-      VUE: "vue",
-      SVELTE: "svelte",
-      ASTRO: "astro",
-      REACT_NATIVE: "tsx",
-      BASE64: "txt",
-    }
-
-    const mimeMap: Record<ExportFormat, string> = {
-      SVG: "image/svg+xml",
-      TSX: "text/typescript-jsx",
-      JSX: "text/javascript-jsx",
-      VUE: "text/vue",
-      SVELTE: "text/svelte",
-      ASTRO: "text/astro",
-      REACT_NATIVE: "text/typescript-jsx",
-      BASE64: "text/plain",
-    }
-
-    const blob = new Blob([formattedCode], { type: mimeMap[format] })
+    const blob = new Blob([formattedCode], { type: MIME_MAP[format] })
     const url = URL.createObjectURL(blob)
     const link = document.createElement("a")
     link.href = url
-    link.download = `${currentDoodle.id.toLowerCase().replace(/\s+/g, "-")}.${extensionMap[format]}`
+    link.download = `${currentDoodle.id.toLowerCase().replace(/\s+/g, "-")}.${EXTENSION_MAP[format]}`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
     URL.revokeObjectURL(url)
   }
 
-  const formats: { label: string; value: ExportFormat }[] = [
-    { label: "SVG", value: "SVG" },
-    { label: "TSX", value: "TSX" },
-    { label: "JSX", value: "JSX" },
-    { label: "Vue", value: "VUE" },
-    { label: "Svelte", value: "SVELTE" },
-    { label: "Astro", value: "ASTRO" },
-    { label: "React Native", value: "REACT_NATIVE" },
-    { label: "Base64", value: "BASE64" },
-  ]
+  const formats = EXPORT_FORMATS
 
   const formattedCode = React.useMemo(() => {
     try {
@@ -216,7 +185,7 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
   }, [currentDoodle, codeFormat, size])
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 sm:p-6 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div
         className="relative w-full max-w-[96vw] sm:max-w-4xl bg-background rounded-3xl border shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]"
         style={{ maxHeight: "calc(100vh - 40px)" }}
@@ -231,215 +200,63 @@ export function DoodleModal({ doodle, onClose, allDoodles }: DoodleModalProps) {
 
         {/* Left Side: Preview Area */}
         <div className="flex-1 bg-muted/20 flex flex-col min-h-75 md:min-h-0">
-          <div className="p-6 border-b flex items-center justify-between bg-background">
-            <div className="flex items-center gap-1 bg-muted p-1 rounded-lg">
-              <button
-                onClick={() => setActiveTab("preview")}
-                className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${activeTab === "preview" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-              >
-                Preview
-              </button>
-              <button
-                onClick={() => setActiveTab("code")}
-                className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${activeTab === "code" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-              >
-                Code
-              </button>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <select
-                className="text-xs bg-muted border-none rounded-md px-2 py-1 focus:ring-1 focus:ring-primary"
-                value={size}
-                onChange={(e) => setSize(e.target.value)}
-              >
-                <option value="16px">16px</option>
-                <option value="18px">18px</option>
-                <option value="24px">24px</option>
-                <option value="32px">32px</option>
-                <option value="36px">36px</option>
-                <option value="48px">48px</option>
-                <option value="64px">64px</option>
-                <option value="72px">72px</option>
-                <option value="96px">96px</option>
-                <option value="128px">128px</option>
-                <option value="192px">192px</option>
-                <option value="256px">256px</option>
-                <option value="512px">512px</option>
-                <option value="100%">Original</option>
-              </select>
-            </div>
-          </div>
+          <DoodleModalTabs
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            size={size}
+            onSizeChange={setSize}
+          />
 
           <div className="relative flex-1 flex items-center justify-center p-8 overflow-auto no-scrollbar">
             {activeTab === "preview" ? (
-              <div
-                className={`flex items-center justify-center transition-all duration-300 ${isWhite ? "p-4 rounded-md bg-black" : ""}`}
-                style={
-                  size === "100%"
-                    ? { width: "100%", height: "auto", maxWidth: "100%", maxHeight: "calc(100vh - 280px)" }
-                    : { width: displaySize, height: displaySize, maxWidth: "100%", maxHeight: "calc(100vh - 280px)" }
-                }
-              >
-               {variants.length > 1 && (
-                  <div
-                    className="md:hidden absolute left-3 top-1/2 -translate-y-1/2 flex flex-col gap-3 w-16 overflow-y-auto no-scrollbar p-2 items-center z-20 rounded"
-                    style={
-                      size === "100%" ? { height: "auto", maxHeight: "calc(100vh - 280px)" } : { height: displaySize }
-                    }
-                  >
-                    {variants.map((v) => (
-                      <button
-                        key={v.style}
-                        onClick={() => currentDoodle.style !== v.style && setCurrentDoodle(v)}
-                        className={`w-12 h-12 flex items-center justify-center p-2 rounded-md transition-all overflow-hidden ${currentDoodle.style === v.style ? "ring-1 ring-primary" : "opacity-70 hover:opacity-100"}`}
-                        aria-label={`${v.style} variant`}
-                      >
-                        <div
-                          className="w-full h-full flex items-center justify-center [&>svg]:max-w-full [&>svg]:max-h-full [&>svg]:w-auto [&>svg]:h-auto"
-                          dangerouslySetInnerHTML={{ __html: v.svg }}
-                        />
-                      </button>
-                    ))}
-                  </div>
-                )}
-                <div
-                  className="w-full h-full flex items-center justify-center"
-                  dangerouslySetInnerHTML={{ __html: getSizedSvg(currentDoodle.svg) }}
-                />
-              </div>
+              <DoodleModalPreview
+                currentDoodle={currentDoodle}
+                variants={variants}
+                getSizedSvg={getSizedSvg}
+                onVariantChange={setCurrentDoodle}
+                size={size}
+                displaySize={displaySize}
+                isWhite={isWhite}
+              />
             ) : (
-              <div className={`w-full h-full bg-muted/50 rounded-xl p-4 flex flex-col overflow-hidden ${isSmallDevice ? "mt-36" : ""}`}>
-                <div className="mb-3 flex items-center gap-2 flex-end justify-end shrink-0">
-                  <div className="flex items-center gap-2 border bg-background rounded-xl px-3 py-1">
-                    <span className="text-sm text-muted-foreground">Format:</span>
-                    <CustomDropdown
-                      options={formats}
-                      value={codeFormat}
-                      onChange={(val) => setCodeFormat(val)}
-                      triggerClassName="hover:bg-muted"
-                    />
-                  </div>
-                </div>
-
-                <div className={`flex-1 min-h-0 ${isMobile ? "overflow-y-auto overflow-x-auto" : "overflow-y-auto"}`}>
-                  <pre
-                    className={`text-[10px] sm:text-xs font-mono text-muted-foreground ${isMobile ? "whitespace-pre" : "whitespace-pre-wrap break-all max-w-full"}`}
-                  >
-                    {formattedCode}
-                  </pre>
-                </div>
-              </div>
+              <DoodleModalCode
+                formattedCode={formattedCode}
+                codeFormat={codeFormat}
+                onFormatChange={setCodeFormat}
+                formats={formats}
+                isMobile={isMobile}
+                isSmallDevice={isSmallDevice}
+              />
             )}
           </div>
         </div>
 
         {/* Right Side: Info & Options */}
         <div className="w-full md:w-80 border-t md:border-l p-6 flex flex-col">
-          <div className="mb-6">
-            <span className="inline-block px-2 py-1 rounded bg-secondary text-secondary-foreground text-[10px] font-bold uppercase tracking-widest mb-2">
-              {currentDoodle.subcategory || currentDoodle.category}
-            </span>
-            <h2 className="text-2xl font-bold truncate">{currentDoodle.id}</h2>
-            <p className="text-sm text-muted-foreground mt-1">Ready to use in your design project.</p>
+          <DoodleModalInfo currentDoodle={currentDoodle} />
+
+          <div className="mb-8">
+            <DoodleModalActions
+              copied={copied}
+              copyFormat={copyFormat}
+              downloadFormat={downloadFormat}
+              activeTab={activeTab}
+              codeFormat={codeFormat}
+              formats={formats}
+              onCopy={handleCopy}
+              onDownload={handleDownload}
+              onCopyFormatChange={setCopyFormat}
+              onDownloadFormatChange={setDownloadFormat}
+            />
           </div>
 
-          <div className="space-y-4 mb-8">
-            <div className="flex flex-col gap-2">
-              <div className="flex w-full group overflow-hidden rounded-xl border-2">
-                <button
-                  onClick={() => handleCopy(activeTab === 'code' ? codeFormat : copyFormat)}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-all active:scale-95"
-                >
-                  {copied ? (
-                    <>
-                      <Check className="w-4 h-4" />
-                      Copied!
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-4 h-4" />
-                      Copy {(activeTab === 'code' ? codeFormat : copyFormat) === "SVG" ? "SVG" : (activeTab === 'code' ? codeFormat : copyFormat) === "REACT_NATIVE" ? "RN" : (activeTab === 'code' ? codeFormat : copyFormat)}
-                    </>
-                  )}
-                </button>
-                <CustomDropdown
-                  options={formats}
-                  value={copyFormat}
-                  onChange={(val) => {
-                    setCopyFormat(val)
-                    handleCopy(val)
-                  }}
-                  triggerClassName="bg-primary text-primary-foreground border-primary-foreground/20 hover:bg-primary/90"
-                />
-              </div>
+          <DoodleModalVariants
+            variants={variants}
+            currentDoodle={currentDoodle}
+            onVariantChange={setCurrentDoodle}
+          />
 
-              <div className="flex w-full group overflow-hidden rounded-xl border-2">
-                <button
-                  onClick={() => handleDownload(activeTab === 'code' ? codeFormat : downloadFormat)}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 font-semibold hover:bg-muted transition-all active:scale-95"
-                >
-                  <Download className="w-4 h-4" />
-                  Download {(activeTab === 'code' ? codeFormat : downloadFormat) === "SVG" ? ".SVG" : (activeTab === 'code' ? codeFormat : downloadFormat) === "REACT_NATIVE" ? "RN" : (activeTab === 'code' ? codeFormat : downloadFormat)}
-                </button>
-                <CustomDropdown
-                  options={formats}
-                  value={downloadFormat}
-                  onChange={(val) => {
-                    setDownloadFormat(val)
-                    handleDownload(val)
-                  }}
-                  triggerClassName="hover:bg-muted"
-                />
-              </div>
-            </div>
-          </div>
-
-          {variants.length > 1 && (
-            <div className="hidden md:block mb-8">
-              <h3 className="text-xs font-bold uppercase text-muted-foreground tracking-widest mb-3">
-                Available Styles
-              </h3>
-              <div className="max-h-55 sm:max-h-80 overflow-y-auto p-2 no-scrollbar" aria-label="Available Styles">
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-2 gap-3">
-                  {variants.map((v) => (
-                    <div
-                      key={v.style}
-                      onClick={() => currentDoodle.style !== v.style && setCurrentDoodle(v)}
-                      className={`p-2 rounded-xl border-2 transition-all cursor-pointer ${currentDoodle.style === v.style ? "border-primary ring-1 ring-primary" : "hover:border-primary/50 opacity-60"}`}
-                    >
-                      <div
-                        className={`aspect-square flex items-center justify-center mb-1 scale-75 ${v.style === "WHITE" ? "p-2 rounded-md bg-black" : ""}`}
-                      >
-                        <div
-                          className="w-full h-full flex items-center justify-center"
-                          dangerouslySetInnerHTML={{ __html: v.svg }}
-                        />
-                      </div>
-                      <p className="text-[10px] text-center font-bold">{v.style}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="hidden md:flex mt-auto pt-6 border-t items-center justify-between text-muted-foreground">
-            <div className="flex gap-4">
-              <div className="flex items-center gap-1">
-                <Monitor className="w-4 h-4" aria-hidden={true} />
-                <span className="sr-only">Desktop Ready</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Tablet className="w-4 h-4" aria-hidden={true} />
-                <span className="sr-only">Tablet Ready</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Smartphone className="w-4 h-4" aria-hidden={true} />
-                <span className="sr-only">Mobile Ready</span>
-              </div>
-            </div>
-          </div>
+          <DoodleModalFooter />
         </div>
       </div>
     </div>

@@ -2,14 +2,7 @@
 
 import * as React from "react"
 import { Download, Copy, Maximize2 } from "lucide-react"
-
-interface DoodleCardProps {
-  doodle: any
-  allDoodles: any[]
-  viewMode: "grid" | "list"
-  onClick: () => void
-  isCandy?: boolean
-}
+import type { DoodleCardProps } from "@/lib/types"
 
 
 export function DoodleCard({ doodle, allDoodles, viewMode, onClick, isCandy }: DoodleCardProps) {
@@ -109,10 +102,12 @@ export function DoodleCard({ doodle, allDoodles, viewMode, onClick, isCandy }: D
                   e.stopPropagation()
                   setActiveStyle(style)
                 }}
-                className={`w-7 h-7 rounded-lg border text-[9px] flex items-center justify-center font-semibold transition-all duration-200 ${
+                className={`w-7 h-7 rounded-lg text-[9px] flex items-center justify-center font-semibold transition-all duration-200 ${
                   activeStyle === style 
-                    ? "bg-primary text-primary-foreground shadow-md scale-105" 
-                    : "bg-background/90 backdrop-blur-sm hover:bg-background hover:scale-105"
+                    ? "bg-primary text-primary-foreground shadow-md scale-105 border border-primary" 
+                    : (isCandy || isBlackBackgroundCategory)
+                      ? "bg-white/90 text-black backdrop-blur-sm hover:bg-white hover:scale-105 border border-white/50"
+                      : "bg-background/90 text-foreground backdrop-blur-sm hover:bg-background hover:scale-105 border border-border"
                 }`}
                 title={`${style.charAt(0)}${style.slice(1).toLowerCase().replace(/_/g, ' ')} Style`}
               >
@@ -139,7 +134,11 @@ export function DoodleCard({ doodle, allDoodles, viewMode, onClick, isCandy }: D
           {/* Background and blur - appears instantly */}
           <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
             {/* Gradient background - fades from bottom to top */}
-            <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/40 to-transparent" />
+            <div className={`absolute inset-0 ${
+              (isCandy || isBlackBackgroundCategory)
+                ? 'bg-gradient-to-t from-white/95 via-white/40 to-transparent'
+                : 'bg-gradient-to-t from-background/95 via-background/40 to-transparent'
+            }`} />
             
             {/* Blur layer - only at bottom, masks out at top */}
             <div className="absolute inset-0 backdrop-blur-md" style={{ maskImage: 'linear-gradient(to top, black 0%, black 40%, transparent 100%)' }} />
@@ -147,10 +146,14 @@ export function DoodleCard({ doodle, allDoodles, viewMode, onClick, isCandy }: D
           
           {/* Text content - slides up */}
           <div className="relative z-10 p-4 pt-8 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
-            <h4 className="font-semibold text-sm text-center truncate mb-1 text-foreground">
+            <h4 className={`font-semibold text-sm text-center truncate mb-1 ${
+              (isCandy || isBlackBackgroundCategory) ? 'text-black' : 'text-foreground'
+            }`}>
               {doodle.id}
             </h4>
-            <p className="text-xs text-muted-foreground text-center uppercase tracking-wider">
+            <p className={`text-xs text-center uppercase tracking-wider ${
+              (isCandy || isBlackBackgroundCategory) ? 'text-gray-700' : 'text-muted-foreground'
+            }`}>
               {currentDoodle.style}
             </p>
           </div>
@@ -162,7 +165,11 @@ export function DoodleCard({ doodle, allDoodles, viewMode, onClick, isCandy }: D
         <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-all duration-200 z-10">
           <button 
             onClick={onClick}
-            className="p-2 rounded-lg bg-background/90 backdrop-blur-sm border border-border/50 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all duration-200 hover:scale-110 shadow-sm"
+            className={`p-2 rounded-lg backdrop-blur-sm transition-all duration-200 hover:scale-110 shadow-sm ${
+              (isCandy || isBlackBackgroundCategory)
+                ? 'bg-white/90 text-black border border-white/50 hover:bg-white hover:border-white'
+                : 'bg-background/90 text-foreground border border-border/50 hover:bg-primary hover:text-primary-foreground hover:border-primary'
+            }`}
             title="View Details"
           >
             <Maximize2 className="w-4 h-4" />

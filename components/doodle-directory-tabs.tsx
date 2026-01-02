@@ -3,19 +3,7 @@
 import * as React from "react"
 import { Loader } from "lucide-react"
 import type { Doodle } from "@/lib/data"
-
-interface TabsProps {
-  selectedView: 'doodles' | 'icons' | 'illustrations'
-  setSelectedView: (v: 'doodles' | 'icons' | 'illustrations') => void
-  selectedCategory: string
-  setSelectedCategory: (c: string) => void
-  loadingDoodles: boolean
-  loadingIcons: boolean
-  loadingIllustrations: boolean
-  allDoodles: Doodle[]
-  iconsTotal: number
-  allIllustrations: Doodle[]
-}
+import type { TabsProps } from "@/lib/types"
 
 export function DoodleDirectoryTabs({
   selectedView,
