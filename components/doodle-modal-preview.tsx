@@ -32,7 +32,7 @@ export function DoodleModalPreview({
             <button
               key={v.style}
               onClick={() => currentDoodle.style !== v.style && onVariantChange(v)}
-              className={`w-12 h-12 flex items-center justify-center p-2 rounded-md transition-all overflow-hidden ${
+              className={`w-12 h-12 flex-shrink-0 flex items-center justify-center p-2 rounded-md transition-all overflow-hidden ${
                 currentDoodle.style === v.style ? "ring-1 ring-primary" : "opacity-70 hover:opacity-100"
               }`}
               aria-label={`${v.style} variant`}
