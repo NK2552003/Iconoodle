@@ -6,8 +6,8 @@ import { useState } from "react"
 type Props = {
   searchQuery: string
   setSearchQuery: (s: string) => void
-  selectedView: 'doodles' | 'icons' | 'illustrations'
-  setSelectedView: (v: 'doodles' | 'icons' | 'illustrations') => void
+  selectedView: 'doodles' | 'icons' | 'illustrations' | 'biology'
+  setSelectedView: (v: 'doodles' | 'icons' | 'illustrations' | 'biology') => void
   selectedCategory: string
   setSelectedCategory: (s: string) => void
   candyOpen: boolean
@@ -19,6 +19,7 @@ type Props = {
   candyCategories: string[]
   iconTopCategories: string[]
   illustrationCategories: string[]
+  biologyCategories: string[]
   candyIcons: any[]
   allDoodles: any[]
   allIllustrations: any[]
@@ -26,6 +27,7 @@ type Props = {
   loadingIllustrations: boolean
   iconsTotal: number
   loadDoodleCategory: (name: string) => void
+  loadBiologyCategory: (name: string) => void
 }
 const REPO = 'https://github.com/nk2552003/Iconoodle'
 const SITE_URL = 'https://nk2552003.github.io/Iconoodle/'
@@ -46,6 +48,7 @@ export function DoodleSidebar({
   candyCategories,
   iconTopCategories,
   illustrationCategories,
+  biologyCategories,
   candyIcons,
   allDoodles,
   allIllustrations,
@@ -53,6 +56,7 @@ export function DoodleSidebar({
   loadingIllustrations,
   iconsTotal,
   loadDoodleCategory,
+  loadBiologyCategory,
 }: Props) {
       const [feedback, setFeedback] = useState<string | null>(null)
     
@@ -211,6 +215,25 @@ export function DoodleSidebar({
                 <button
                   key={category}
                   onClick={() => { setSelectedCategory(category); setSelectedView('illustrations') }}
+                  className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                    selectedCategory === category ? "bg-primary text-primary-foreground font-medium" : "hover:bg-muted text-foreground"
+                  }`}
+                >
+                  {category
+                    .split("-")
+                    .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(" ")}
+                </button>
+              ))}
+            </div>
+          </section>
+        ) : selectedView === 'biology' ? (
+          <section>
+            <div className="space-y-1">
+              {["All", ...biologyCategories].map((category) => (
+                <button
+                  key={category}
+                  onClick={() => { setSelectedCategory(category); setSelectedView('biology'); loadBiologyCategory(category) }}
                   className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
                     selectedCategory === category ? "bg-primary text-primary-foreground font-medium" : "hover:bg-muted text-foreground"
                   }`}

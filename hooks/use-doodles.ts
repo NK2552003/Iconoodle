@@ -4,22 +4,9 @@ import * as React from "react"
 import type { Doodle, GroupedIcon } from "@/lib/data"
 import type { IconVariant } from "@/lib/data"
 
-// Import icon sources statically so they are bundled into the production build
-import iconsJson from '@/lib/icons.json'
-import handdrawnIcons from '@/lib/handdrawn-icons.json'
-import handdrawnType2Icons from '@/lib/handdrawn-type-2-icons.json'
-import handmadeDoodledIcons from '@/lib/handmade-doodled-icons.json'
-import publicCoolicons from '@/lib/public-coolicons.json'
-import publicIconly from '@/lib/public-iconly.json'
-import publicSmooothIcons from '@/lib/public-smoooth-icons.json'
-import publicSocialMedia from '@/lib/public-social-media.json'
-import publicSocialMedia2 from '@/lib/public-social-media-2.json'
-import publicFluentIcons from '@/lib/public-fluent-icons.json'
-import candyIconsJson from '@/lib/candy-icons.json'
-import carsIcons from '@/lib/cars-icons.json'
-import naturalStampingElements from '@/lib/natural-stamping-elements.json'
-import { ILLUSTRATIONS as STATIC_ILLUSTRATIONS } from '@/lib/data'
-import christmasIcons from '@/lib/christmas.json'
+// Icon sources will be dynamically imported in `loadIcons` to keep the initial
+// JavaScript bundle small and improve first-load performance on mobile devices.
+// (Previously these were imported statically which increased initial bundle size.)
 export function useDoodles(): {
   doodles: Doodle[]
   allDoodles: Doodle[]
@@ -36,16 +23,23 @@ export function useDoodles(): {
   illustrations: Doodle[]
   allIllustrations: Doodle[]
   illustrationCategories: string[]
+  biology: Doodle[]
+  allBiology: Doodle[]
+  biologyCategories: string[]
   loading: boolean
   // on-demand loaders
   loadDoodleCategory: (name: string) => Promise<void>
   loadNextDoodleCategory: () => Promise<void>
+  loadBiologyCategory: (name: string) => Promise<void>
+  loadNextBiologyCategory: () => Promise<void>
   hasMoreAll: boolean
+  hasMoreBiology: boolean
   loadingDoodles: boolean
   loadIcons: () => Promise<void>
   loadingIcons: boolean
   loadIllustrations: () => Promise<void>
   loadingIllustrations: boolean
+  loadingBiology: boolean
 } {
   // UI should render immediately but avoid showing the empty state before data loads
   // Keep `loading` true until at least one doodle category has been loaded to prevent
@@ -88,6 +82,22 @@ export function useDoodles(): {
     { name: 'brutalist-doodles', path: 'brutalist-doodles.json' },
   ]
   const DOODLE_CATEGORIES = FILES.map((f) => f.name)
+
+  const BIOLOGY_FILES: Array<{ name: string; path: string }> = [
+    { name: 'human-muscular-system-muscles', path: 'Human/human-muscular-system-muscles.json' },
+    { name: 'human-muscular-system-views', path: 'Human/human-muscular-system-views.json' },
+    { name: 'human-muscular-system', path: 'Human/human-muscular-system.json' },
+    { name: 'human-organs', path: 'Human/human-organs.json' },
+    { name: 'human-skeletal-system', path: 'Human/human-skeletal-system.json' },
+    { name: 'human-skin', path: 'Human/human-skin.json' },
+  ]
+  const BIOLOGY_CATEGORIES = BIOLOGY_FILES.map((f) => f.name)
+
+  const [biologyCategories, setBiologyCategories] = React.useState<string[]>([])
+  const [loadedBiologyMap, setLoadedBiologyMap] = React.useState<Map<string, Doodle[]>>(new Map())
+  const [loadedBiologyOrder, setLoadedBiologyOrder] = React.useState<string[]>([])
+  const [loadingBiologyCategories, setLoadingBiologyCategories] = React.useState<Set<string>>(new Set())
+  const loadingBiology = loadingBiologyCategories.size > 0
 
   // Load a single doodle category on demand
   const loadDoodleCategory = React.useCallback(async (name: string) => {
@@ -147,14 +157,66 @@ export function useDoodles(): {
 
   const hasMoreAll = loadedDoodleOrder.length < FILES.length
 
+  // Biology loaders (Human JSONs)
+  const loadBiologyCategory = React.useCallback(async (name: string) => {
+    if (loadedBiologyMap.has(name) || loadingBiologyCategories.has(name)) return
+    setLoadingBiologyCategories((prev) => new Set(prev).add(name))
+    try {
+      const entry = BIOLOGY_FILES.find((f) => f.name === name)
+      if (!entry) return
+
+      const mod = await import(/* @vite-ignore */ `@/lib/${entry.path}`)
+      const arr = (mod?.default || mod) as any[]
+      if (!Array.isArray(arr)) return
+
+      let items: Doodle[]
+      if (arr.length && (arr[0] as any).variants) {
+        items = arr.flatMap((g: any) => Object.entries(g.variants || {}).map(([style, v]: any) => ({
+          id: g.id,
+          category: entry.name,
+          style: v.style ?? style,
+          src: v.src ?? '',
+          svg: v.svg ?? '',
+          viewBox: v.viewBox ?? '',
+        }))) as Doodle[]
+      } else {
+        items = arr.map((d) => ({ ...(d || {}), category: entry.name })) as Doodle[]
+      }
+
+      setLoadedBiologyMap((prev) => new Map(prev).set(name, items))
+      setLoadedBiologyOrder((prev) => (prev.includes(name) ? prev : [...prev, name]))
+      // First successful load means we have assets — clear the initial loading flag
+      setLoading(false)
+    } finally {
+      setLoadingBiologyCategories((prev) => {
+        const n = new Set(prev)
+        n.delete(name)
+        return n
+      })
+      setLoading(false)
+    }
+  }, [loadedBiologyMap, loadingBiologyCategories])
+
+  const loadNextBiologyCategory = React.useCallback(async () => {
+    const next = BIOLOGY_FILES.map((f) => f.name).find((c) => !loadedBiologyOrder.includes(c))
+    if (!next) return
+    await loadBiologyCategory(next)
+  }, [loadedBiologyOrder, loadBiologyCategory])
+
+  const hasMoreBiology = loadedBiologyOrder.length < BIOLOGY_FILES.length
+
   // Initialize UI quickly: populate categories so sidebar renders instantly
   React.useEffect(() => {
     setCategories(DOODLE_CATEGORIES.slice())
+    setBiologyCategories(BIOLOGY_CATEGORIES.slice())
     // Keep `loading` true until the first doodle category is actually loaded
   }, [])
 
   // All doodles are the concatenation of loaded categories in the chosen order
   const allDoodles = React.useMemo(() => loadedDoodleOrder.flatMap((n) => loadedDoodleMap.get(n) || []), [loadedDoodleOrder, loadedDoodleMap])
+
+  // Biology aggregated from loaded biology categories
+  const allBiology = React.useMemo(() => loadedBiologyOrder.flatMap((n) => loadedBiologyMap.get(n) || []), [loadedBiologyOrder, loadedBiologyMap])
 
   // Recompute derived doodle info when any doodle category loads
   React.useEffect(() => {
@@ -241,7 +303,7 @@ export function useDoodles(): {
   // Keep variant-level categories available if needed
   const iconCategories = React.useMemo(() => Array.from(new Set(allIcons.map((i) => i.category))).sort(), [allIcons])
 
-  const illustrationCategories = React.useMemo(() => Array.from(new Set([...(STATIC_ILLUSTRATIONS || []).map((i) => i.category), ...illustrations.map((i) => i.category)])).sort(), [illustrations])
+  const illustrationCategories = React.useMemo(() => Array.from(new Set([...illustrations.map((i: Doodle) => i.category)])).sort(), [illustrations])
 
   // Load all icon sources + candy icons (on-demand)
   const loadIcons = React.useCallback(async () => {
@@ -250,21 +312,87 @@ export function useDoodles(): {
     try {
       const sources: Array<{ items: GroupedIcon[]; source: string }> = []
 
-      // The static imports above guarantee these are available at build time in most bundlers.
-      // Wrap each in a try/catch to be defensive in case one file isn't present in the bundle.
-      try { sources.push({ items: (iconsJson as any) as GroupedIcon[], source: 'icons' }) } catch (e) { console.error('[useDoodles] icons.json missing', e) }
-      try { sources.push({ items: (christmasIcons as any) as GroupedIcon[], source: 'christmasIcons' }) } catch (e) { console.error('[useDoodles] christmas.json missing', e) }
-      try { sources.push({ items: (handdrawnIcons as any) as GroupedIcon[], source: 'handdrawn-icons' }) } catch (e) { console.error('[useDoodles] handdrawn-icons.json missing', e) }
-      try { sources.push({ items: (handdrawnType2Icons as any) as GroupedIcon[], source: 'handdrawn-type-2-icons' }) } catch (e) { console.error('[useDoodles] handdrawn-type-2-icons.json missing', e) }
-      try { sources.push({ items: (handmadeDoodledIcons as any) as GroupedIcon[], source: 'handmade-doodled-icons' }) } catch (e) { console.error('[useDoodles] handmade-doodled-icons.json missing', e) }
-      try { sources.push({ items: (publicCoolicons as any) as GroupedIcon[], source: 'public-coolicons' }) } catch (e) { console.error('[useDoodles] public-coolicons.json missing', e) }
-      try { sources.push({ items: (publicIconly as any) as GroupedIcon[], source: 'public-iconly' }) } catch (e) { console.error('[useDoodles] public-iconly.json missing', e) }
-      try { sources.push({ items: (publicSmooothIcons as any) as GroupedIcon[], source: 'public-smoooth-icons' }) } catch (e) { console.error('[useDoodles] public-smoooth-icons.json missing', e) }
-      try { sources.push({ items: (publicSocialMedia as any) as GroupedIcon[], source: 'public-social-media' }) } catch (e) { console.error('[useDoodles] public-social-media.json missing', e) }
-      try { sources.push({ items: (publicSocialMedia2 as any) as GroupedIcon[], source: 'public-social-media-2' }) } catch (e) { console.error('[useDoodles] public-social-media-2.json missing', e) }
-      try { sources.push({ items: (publicFluentIcons as any) as GroupedIcon[], source: 'public-fluent-icons' }) } catch (e) { console.error('[useDoodles] public-fluent-icons.json missing', e) }
-      try { sources.push({ items: (carsIcons as any) as GroupedIcon[], source: 'cars-icons' }) } catch (e) { console.error('[useDoodles] cars-icons.json missing', e) }
-      try { sources.push({ items: (naturalStampingElements as any) as GroupedIcon[], source: 'natural-stamping-elements' }) } catch (e) { console.error('[useDoodles] natural-stamping-elements.json missing', e) }
+      // Dynamically import icon sources to avoid bundling them into the main JS.
+      // This reduces initial load time (especially on mobile) and keeps the UI interactive
+      // while icon sources are fetched on demand.
+      try {
+        const mod = await import('@/lib/icons.json')
+        sources.push({ items: ((mod?.default || mod) as any) as GroupedIcon[], source: 'icons' })
+      } catch (e) {
+        console.error('[useDoodles] icons.json missing', e)
+      }
+      try {
+        const mod = await import('@/lib/christmas.json')
+        sources.push({ items: (mod?.default || mod) as GroupedIcon[], source: 'christmasIcons' })
+      } catch (e) {
+        console.error('[useDoodles] christmas.json missing', e)
+      }
+      try {
+        const mod = await import('@/lib/handdrawn-icons.json')
+        sources.push({ items: (mod?.default || mod) as GroupedIcon[], source: 'handdrawn-icons' })
+      } catch (e) {
+        console.error('[useDoodles] handdrawn-icons.json missing', e)
+      }
+      try {
+        const mod = await import('@/lib/handdrawn-type-2-icons.json')
+        sources.push({ items: (mod?.default || mod) as GroupedIcon[], source: 'handdrawn-type-2-icons' })
+      } catch (e) {
+        console.error('[useDoodles] handdrawn-type-2-icons.json missing', e)
+      }
+      try {
+        const mod = await import('@/lib/handmade-doodled-icons.json')
+        sources.push({ items: (mod?.default || mod) as GroupedIcon[], source: 'handmade-doodled-icons' })
+      } catch (e) {
+        console.error('[useDoodles] handmade-doodled-icons.json missing', e)
+      }
+      try {
+        const mod = await import('@/lib/public-coolicons.json')
+        sources.push({ items: ((mod?.default || mod) as any) as GroupedIcon[], source: 'public-coolicons' })
+      } catch (e) {
+        console.error('[useDoodles] public-coolicons.json missing', e)
+      }
+      try {
+        const mod = await import('@/lib/public-iconly.json')
+        sources.push({ items: (mod?.default || mod) as GroupedIcon[], source: 'public-iconly' })
+      } catch (e) {
+        console.error('[useDoodles] public-iconly.json missing', e)
+      }
+      try {
+        const mod = await import('@/lib/public-smoooth-icons.json')
+        sources.push({ items: (mod?.default || mod) as GroupedIcon[], source: 'public-smoooth-icons' })
+      } catch (e) {
+        console.error('[useDoodles] public-smoooth-icons.json missing', e)
+      }
+      try {
+        const mod = await import('@/lib/public-social-media.json')
+        sources.push({ items: (mod?.default || mod) as GroupedIcon[], source: 'public-social-media' })
+      } catch (e) {
+        console.error('[useDoodles] public-social-media.json missing', e)
+      }
+      try {
+        const mod = await import('@/lib/public-social-media-2.json')
+        sources.push({ items: (mod?.default || mod) as GroupedIcon[], source: 'public-social-media-2' })
+      } catch (e) {
+        console.error('[useDoodles] public-social-media-2.json missing', e)
+      }
+      try {
+        const mod = await import('@/lib/public-fluent-icons.json')
+        sources.push({ items: (mod?.default || mod) as GroupedIcon[], source: 'public-fluent-icons' })
+      } catch (e) {
+        console.error('[useDoodles] public-fluent-icons.json missing', e)
+      }
+      try {
+        const mod = await import('@/lib/cars-icons.json')
+        sources.push({ items: (mod?.default || mod) as GroupedIcon[], source: 'cars-icons' })
+      } catch (e) {
+        console.error('[useDoodles] cars-icons.json missing', e)
+      }
+      try {
+        const mod = await import('@/lib/natural-stamping-elements.json')
+        sources.push({ items: (mod?.default || mod) as GroupedIcon[], source: 'natural-stamping-elements' })
+      } catch (e) {
+        console.error('[useDoodles] natural-stamping-elements.json missing', e)
+      }
 
       if (sources.length === 0) {
         // nothing available — set empty arrays so UI shows 'No assets found' but avoid runtime crash
@@ -280,12 +408,12 @@ export function useDoodles(): {
       setGroupedIcons(merged)
       setAllIcons(merged.flatMap((g) => Object.entries(g.variants).map(([style, v]) => ({ id: g.id, category: g.category ?? v.category, style, src: v.src, svg: v.svg, viewBox: v.viewBox }))))
 
-      // candy icons from static import
+      // candy icons from dynamic import
       try {
-        const candy = (candyIconsJson as any) as Doodle[]
+        const candyMod = await import('@/lib/candy-icons.json')
+        const candy = (candyMod?.default || candyMod) as Doodle[]
         setCandyIcons(Array.isArray(candy) ? candy : [])
       } catch (e) {
-        // eslint-disable-next-line no-console
         console.error('[useDoodles] Failed to parse candy-icons.json', e)
         setCandyIcons([])
       }
@@ -355,17 +483,25 @@ export function useDoodles(): {
     illustrations,
     allIllustrations: illustrations,
     illustrationCategories,
+    // Biology
+    biology: allBiology,
+    allBiology,
+    biologyCategories,
     loading,
 
     // on-demand loaders
     loadDoodleCategory,
     loadNextDoodleCategory,
+    loadBiologyCategory,
+    loadNextBiologyCategory,
     hasMoreAll,
+    hasMoreBiology,
     // expose a boolean indicating whether any doodle category is loading
     loadingDoodles,
     loadIcons,
     loadingIcons,
     loadIllustrations,
     loadingIllustrations,
+    loadingBiology,
   }
 }
