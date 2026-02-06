@@ -16,7 +16,7 @@ export function DoodleDirectoryHeader({ selectedView, selectedCategory, loadingD
           Free, editable SVGs to spice up your designs. Showing {visibleCount} of {totalCount} {selectedView === 'icons' ? "icons" : selectedView === 'illustrations' ? "illustrations" : selectedView === 'biology' ? "biology assets" : "doodles"}.
         </p>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 w-full md:w-auto justify-end">
         <button
           onClick={() => setViewMode("grid")}
           className={`p-2 rounded-md transition-colors ${viewMode === "grid" ? "bg-secondary text-secondary-foreground" : "hover:bg-muted"}`}
