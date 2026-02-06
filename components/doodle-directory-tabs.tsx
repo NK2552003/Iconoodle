@@ -16,9 +16,11 @@ export function DoodleDirectoryTabs({
   allDoodles,
   iconsTotal,
   allIllustrations,
+  loadingBiology,
+  biologyTotal,
 }: TabsProps) {
   return (
-    <div className="hidden md:grid md:grid-cols-3 gap-3 p-2 md:mt-4 md:mx-2 rounded-xl md:sticky md:top-4 md:z-30 md:backdrop-blur-sm md:border">
+    <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-3 p-2 md:mt-4 md:mx-2 rounded-xl md:sticky md:top-4 md:z-30 md:backdrop-blur-sm md:border">
       <button
         onClick={() => { setSelectedCategory("All"); setSelectedView('doodles') }}
         className={`w-full text-center px-3 py-2 rounded-lg text-sm transition-colors flex flex-col items-center gap-1 border border-border/50 ${
@@ -62,6 +64,22 @@ export function DoodleDirectoryTabs({
           (allIllustrations.length > 0 || selectedView === 'illustrations') ? (
             <span className="text-xs text-muted-foreground mt-1">{allIllustrations.length} assets</span>
           ) :   <span className="text-xs text-muted-foreground mt-1">1024 assets</span>
+        )}
+      </button>
+
+      <button
+        onClick={() => { setSelectedCategory("All"); setSelectedView('biology') }}
+        className={`w-full text-center px-3 py-2 rounded-lg text-sm transition-colors flex flex-col items-center gap-1 border border-border/50 ${
+          selectedView === 'biology' ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 hover:bg-muted/20"
+        }`}
+      >
+        <div className="md:text-lg md:font-semibold min-w-0 truncate text-xl">Biology</div>
+        {loadingBiology ? (
+          <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1"><Loader className="w-3 h-3 animate-spin" /> <span className="ml-1">Loading</span></div>
+        ) : (
+          biologyTotal > 0 ? (
+            <span className="text-xs text-muted-foreground mt-1">{biologyTotal} assets</span>
+          ) : <span className="text-xs text-muted-foreground mt-1">— assets</span>
         )}
       </button>
     </div>

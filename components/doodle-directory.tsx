@@ -12,13 +12,13 @@ import { useDoodles } from "@/hooks/use-doodles"
 import type { Doodle } from "@/lib/data"
 
 export function DoodleDirectory() {
-  const { doodles, allDoodles, categories, doodleSubcategories, loading, icons, allIcons, groupedIcons, iconTopCategories, candyIcons, candyCategories, illustrations, allIllustrations, illustrationCategories, loadDoodleCategory, loadNextDoodleCategory, hasMoreAll, loadingDoodles, loadIcons, loadingIcons, loadIllustrations, loadingIllustrations } = useDoodles()
+  const { doodles, allDoodles, categories, doodleSubcategories, loading, icons, allIcons, groupedIcons, iconTopCategories, candyIcons, candyCategories, illustrations, allIllustrations, illustrationCategories, biology, allBiology, biologyCategories, loadDoodleCategory, loadNextDoodleCategory, loadBiologyCategory, loadNextBiologyCategory, hasMoreAll, hasMoreBiology, loadingDoodles, loadIcons, loadingIcons, loadIllustrations, loadingIllustrations, loadingBiology } = useDoodles()
   const [searchQuery, setSearchQuery] = React.useState("")
   const [candyOpen, setCandyOpen] = React.useState(false)
   const [simpleOpen, setSimpleOpen] = React.useState(false)
   const [selectedCategory, setSelectedCategory] = React.useState("All")
   const [selectedDoodle, setSelectedDoodle] = React.useState<Doodle | null>(null)
-  const [selectedView, setSelectedView] = React.useState<'doodles' | 'icons' | 'illustrations'>('doodles')
+  const [selectedView, setSelectedView] = React.useState<'doodles' | 'icons' | 'illustrations' | 'biology'>('doodles')
   const [viewMode, setViewMode] = React.useState<"grid" | "list">("grid")
   // Count all icon variants + candy icons
   const iconsTotal = React.useMemo(() => allIcons.length + candyIcons.length, [allIcons, candyIcons])
@@ -72,6 +72,16 @@ export function DoodleDirectory() {
     })
   }, [illustrations, searchQuery, selectedCategory])
 
+  const filteredBiology = React.useMemo(() => {
+    return allBiology.filter((b: Doodle) => {
+      const matchesSearch =
+        b.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (b.category || '').toLowerCase().includes(searchQuery.toLowerCase())
+      const matchesCategory = selectedCategory === "All" || b.category === selectedCategory
+      return matchesSearch && matchesCategory
+    })
+  }, [allBiology, searchQuery, selectedCategory])
+
   // Pagination / Infinite Scroll
   const PAGE_SIZE = 20
   const [visibleCount, setVisibleCount] = React.useState(PAGE_SIZE)
@@ -102,44 +112,83 @@ export function DoodleDirectory() {
     return () => window.clearTimeout(t)
   }, [selectedCategory, selectedView, viewMode, searchQuery, candyOpen])
 
-  // When the user switches views, load the corresponding JSON on demand
+  // When the user switches views, load the corresponding JSON on demand.
+  // Defer expensive loads to idle time so the initial paint is snappy on mobile.
   React.useEffect(() => {
+    let idleId: number | null = null
+    let t: number | null = null
+
     if (selectedView === 'doodles') {
-      // If user selected a top-level doodle file category, load that file; otherwise load 'simple-doodles' (subcategories live inside it)
-      let nameToLoad = 'simple-doodles'
-      if (selectedCategory !== 'All') {
-        if (categories.includes(selectedCategory)) {
-          nameToLoad = selectedCategory
-        } else {
-          nameToLoad = 'simple-doodles'
+      const doLoad = () => {
+        // If user selected a top-level doodle file category, load that file; otherwise load 'simple-doodles' (subcategories live inside it)
+        let nameToLoad = 'simple-doodles'
+        if (selectedCategory !== 'All') {
+          if (categories.includes(selectedCategory)) {
+            nameToLoad = selectedCategory
+          } else {
+            nameToLoad = 'simple-doodles'
+          }
         }
+        loadDoodleCategory(nameToLoad)
       }
-      loadDoodleCategory(nameToLoad)
+
+      if (typeof (window as any).requestIdleCallback === 'function') {
+        idleId = (window as any).requestIdleCallback(() => doLoad())
+      } else {
+        t = window.setTimeout(() => doLoad(), 120)
+      }
     }
+
     if (selectedView === 'icons') {
       loadIcons()
     }
     if (selectedView === 'illustrations') {
       loadIllustrations()
     }
-  }, [selectedView, selectedCategory, loadDoodleCategory, loadIcons, loadIllustrations])
+    if (selectedView === 'biology') {
+      // load a biology file: prefer selected category if present, otherwise a first biology category
+      let nameToLoad = 'human-muscular-system'
+      if (selectedCategory !== 'All') {
+        if (biologyCategories.includes(selectedCategory)) {
+          nameToLoad = selectedCategory
+        } else {
+          nameToLoad = biologyCategories[0] || nameToLoad
+        }
+      } else {
+        nameToLoad = biologyCategories[0] || nameToLoad
+      }
+      loadBiologyCategory(nameToLoad)
+    }
+
+    return () => {
+      if (idleId != null && typeof (window as any).cancelIdleCallback === 'function') (window as any).cancelIdleCallback(idleId)
+      if (t != null) window.clearTimeout(t)
+    }
+  }, [selectedView, selectedCategory, loadDoodleCategory, loadIcons, loadIllustrations, loadBiologyCategory, biologyCategories])
 
   // Combine doodles/icons/illustrations into a single view depending on selectedView
   const filteredItems = React.useMemo(() => {
     if (selectedView === 'icons') return filteredIcons
     if (selectedView === 'illustrations') return filteredIllustrations
+    if (selectedView === 'biology') return filteredBiology
     return filteredDoodles
-  }, [selectedView, filteredDoodles, filteredIcons, filteredIllustrations])
+  }, [selectedView, filteredDoodles, filteredIcons, filteredIllustrations, filteredBiology])
   const visibleItems = React.useMemo(() => filteredItems.slice(0, visibleCount), [filteredItems, visibleCount])
 
   // Only show the full-grid loading placeholders when the view is actively loading AND there are no items to show yet
-  const viewLoading = (selectedView === 'doodles' && loadingDoodles) || (selectedView === 'icons' && loadingIcons) || (selectedView === 'illustrations' && loadingIllustrations) || loading
+  const viewLoading = (selectedView === 'doodles' && loadingDoodles) || (selectedView === 'icons' && loadingIcons) || (selectedView === 'illustrations' && loadingIllustrations) || (selectedView === 'biology' && loadingBiology) || loading
   const showLoadingPlaceholders = viewLoading && filteredItems.length === 0
 
   React.useEffect(() => {
     if (showLoadingPlaceholders) return
-    const currentTotal = selectedView === 'icons' ? filteredIcons.length : selectedView === 'illustrations' ? filteredIllustrations.length : filteredDoodles.length
-    if (currentTotal <= visibleCount) return
+    const currentTotal = selectedView === 'icons' ? filteredIcons.length : selectedView === 'illustrations' ? filteredIllustrations.length : selectedView === 'biology' ? filteredBiology.length : filteredDoodles.length
+    // If we don't have more items visible than the current page size, proactively load the next biology category (if any)
+    if (currentTotal <= visibleCount) {
+      if (selectedView === 'biology' && hasMoreBiology) {
+        loadNextBiologyCategory()
+      }
+      return
+    }
     const node = sentinelRef.current
     if (!node) return
 
@@ -151,6 +200,10 @@ export function DoodleDirectory() {
             // If in Doodles view, try loading the next doodle category (if any) to progressively fill "All"
             if (selectedView === 'doodles' && hasMoreAll) {
               loadNextDoodleCategory()
+            }
+            // If in Biology view, try loading the next biology category (if any)
+            if (selectedView === 'biology' && hasMoreBiology) {
+              loadNextBiologyCategory()
             }
             // emulate async fetch
             setTimeout(() => {
@@ -165,7 +218,7 @@ export function DoodleDirectory() {
 
     observer.observe(node)
     return () => observer.disconnect()
-  }, [showLoadingPlaceholders, filteredIcons.length, filteredDoodles.length, filteredIllustrations.length, visibleCount, isFetchingMore, selectedView])
+  }, [showLoadingPlaceholders, filteredIcons.length, filteredDoodles.length, filteredIllustrations.length, filteredBiology.length, visibleCount, isFetchingMore, selectedView, hasMoreAll, hasMoreBiology, loadNextDoodleCategory, loadNextBiologyCategory])
 
   return (
     <div className="flex flex-col md:h-screen md:overflow-hidden">
@@ -181,9 +234,11 @@ export function DoodleDirectory() {
         loadingDoodles={loadingDoodles}
         loadingIcons={loadingIcons}
         loadingIllustrations={loadingIllustrations}
+        loadingBiology={loadingBiology}
         iconsTotal={iconsTotal}
         allDoodles={allDoodles}
         allIllustrations={allIllustrations}
+        allBiology={allBiology}
         candyOpen={candyOpen}
         setCandyOpen={setCandyOpen}
         simpleOpen={simpleOpen}
@@ -192,9 +247,11 @@ export function DoodleDirectory() {
         doodleSubcategories={doodleSubcategories}
         iconTopCategories={iconTopCategories}
         illustrationCategories={illustrationCategories}
+        biologyCategories={biologyCategories}
         categories={categories}
         loadDoodleCategory={loadDoodleCategory}
-      />
+        loadBiologyCategory={loadBiologyCategory}
+        iconCategories={[]}      />
 
       <div className="flex-1 flex flex-col md:flex-row md:overflow-hidden">
 
@@ -216,6 +273,7 @@ export function DoodleDirectory() {
           candyCategories={candyCategories}
           iconTopCategories={iconTopCategories}
           illustrationCategories={illustrationCategories}
+          biologyCategories={biologyCategories}
           candyIcons={candyIcons}
           allDoodles={allDoodles}
           allIllustrations={allIllustrations}
@@ -223,6 +281,7 @@ export function DoodleDirectory() {
           loadingIllustrations={loadingIllustrations}
           iconsTotal={iconsTotal}
           loadDoodleCategory={loadDoodleCategory}
+          loadBiologyCategory={loadBiologyCategory}
         />
 <div className="flex-1 flex flex-col md:overflow-hidden">
     <DoodleDirectoryTabs
@@ -233,9 +292,11 @@ export function DoodleDirectory() {
       loadingDoodles={loadingDoodles}
       loadingIcons={loadingIcons}
       loadingIllustrations={loadingIllustrations}
+      loadingBiology={loadingBiology}
       allDoodles={allDoodles}
       iconsTotal={iconsTotal}
       allIllustrations={allIllustrations}
+      biologyTotal={allBiology.length}
     />
         <main ref={mainRef} className="flex-1 p-6 md:p-8 md:px-8 md:pt-4 scroll-mt-20 md:scroll-mt-16 flex flex-col md:overflow-auto">
 
@@ -245,6 +306,7 @@ export function DoodleDirectory() {
             loadingDoodles={loadingDoodles}
             loadingIcons={loadingIcons}
             loadingIllustrations={loadingIllustrations}
+            loadingBiology={loadingBiology}
             visibleCount={visibleItems.length}
             totalCount={filteredItems.length}
             viewMode={viewMode}
@@ -259,20 +321,16 @@ export function DoodleDirectory() {
             viewMode={viewMode}
             candyIcons={candyIcons}
             setSelectedDoodle={(d) => setSelectedDoodle(d)}
-            allDoodlesParent={selectedView === 'icons' ? allIcons : selectedView === 'illustrations' ? allIllustrations : allDoodles}
+            allDoodlesParent={selectedView === 'icons' ? allIcons : selectedView === 'illustrations' ? allIllustrations : selectedView === 'biology' ? allBiology : allDoodles}
             sentinelRef={sentinelRef}
           />
-
-          {!showLoadingPlaceholders && filteredItems.length === 0 && (
-            <DoodleDirectoryEmpty onClear={() => { setSearchQuery(""); setSelectedCategory("All"); setSelectedView('doodles') }} />
-          )}
         </main>
-</div>
-      </div>
 
       {selectedDoodle && (
-        <DoodleModal doodle={selectedDoodle} onClose={() => setSelectedDoodle(null)} allDoodles={selectedView === 'icons' ? allIcons : selectedView === 'illustrations' ? allIllustrations : allDoodles} />
+        <DoodleModal doodle={selectedDoodle} onClose={() => setSelectedDoodle(null)} allDoodles={selectedView === 'icons' ? allIcons : selectedView === 'illustrations' ? allIllustrations : selectedView === 'biology' ? allBiology : allDoodles} />
       )}
     </div>
+  </div>
+</div>
   )
 }

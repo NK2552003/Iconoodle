@@ -66,27 +66,30 @@ export interface DoodleCardProps {
  * Directory tabs props
  */
 export interface TabsProps {
-  selectedView: 'doodles' | 'icons' | 'illustrations'
-  setSelectedView: (v: 'doodles' | 'icons' | 'illustrations') => void
+  selectedView: 'doodles' | 'icons' | 'illustrations' | 'biology'
+  setSelectedView: (v: 'doodles' | 'icons' | 'illustrations' | 'biology') => void
   selectedCategory: string
   setSelectedCategory: (c: string) => void
   loadingDoodles: boolean
   loadingIcons: boolean
   loadingIllustrations: boolean
+  loadingBiology: boolean
   allDoodles: Doodle[]
   iconsTotal: number
   allIllustrations: Doodle[]
+  biologyTotal: number
 }
 
 /**
  * Directory header props
  */
 export interface HeaderProps {
-  selectedView: 'doodles' | 'icons' | 'illustrations'
+  selectedView: 'doodles' | 'icons' | 'illustrations' | 'biology'
   selectedCategory: string
   loadingDoodles: boolean
   loadingIcons: boolean
   loadingIllustrations: boolean
+  loadingBiology: boolean
   visibleCount: number
   totalCount: number
   viewMode: "grid" | "list"
@@ -116,16 +119,18 @@ export interface GridProps {
 export interface MobileProps {
   searchQuery: string
   setSearchQuery: (v: string) => void
-  selectedView: 'doodles' | 'icons' | 'illustrations'
-  setSelectedView: (v: 'doodles' | 'icons' | 'illustrations') => void
+  selectedView: 'doodles' | 'icons' | 'illustrations' | 'biology'
+  setSelectedView: (v: 'doodles' | 'icons' | 'illustrations' | 'biology') => void
   selectedCategory: string
   setSelectedCategory: (c: string) => void
   loadingDoodles: boolean
   loadingIcons: boolean
   loadingIllustrations: boolean
+  loadingBiology: boolean
   iconsTotal: number
   allDoodles: Doodle[]
   allIllustrations: Doodle[]
+  allBiology: Doodle[]
   candyOpen: boolean
   setCandyOpen: React.Dispatch<React.SetStateAction<boolean>>
   simpleOpen: boolean
@@ -134,9 +139,11 @@ export interface MobileProps {
   doodleSubcategories: string[]
   iconCategories: string[]
   illustrationCategories: string[]
+  biologyCategories: string[]
   iconTopCategories: string[]
   categories: string[]
   loadDoodleCategory: (name: string) => void
+  loadBiologyCategory: (name: string) => void
 }
 
 /**

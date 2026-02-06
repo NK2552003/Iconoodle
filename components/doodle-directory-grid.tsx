@@ -21,8 +21,8 @@ export function DoodleDirectoryGrid({ showLoadingPlaceholders, visibleItems, isF
     <>
       <div
         className={`grid ${
-          viewMode === "grid" ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6" : "grid-cols-1"
-        } gap-4`}
+          viewMode === "grid" ? "grid-cols-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6" : "grid-cols-1"
+        } gap-2 md:gap-4`}
       >
         {visibleItems.map((item: any, index: number) => (
           <DoodleCard

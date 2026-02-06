@@ -4,19 +4,19 @@ import * as React from "react"
 import { Grid, List, Loader } from "lucide-react"
 import type { HeaderProps } from "@/lib/types"
 
-export function DoodleDirectoryHeader({ selectedView, selectedCategory, loadingDoodles, loadingIcons, loadingIllustrations, visibleCount, totalCount, viewMode, setViewMode }: HeaderProps) {
+export function DoodleDirectoryHeader({ selectedView, selectedCategory, loadingDoodles, loadingIcons, loadingIllustrations, loadingBiology, visibleCount, totalCount, viewMode, setViewMode }: HeaderProps) {
   return (
     <div className="mb-8 flex items-start justify-between gap-6">
-      <div className="min-w-0">
+      <div className="min-w-0 hidden md:block">
         <h2 className="text-3xl font-bold tracking-tight mb-2 truncate">
-          {selectedView === 'icons' ? (selectedCategory === "All" ? "Icons" : selectedCategory) : selectedView === 'illustrations' ? (selectedCategory === "All" ? "Illustrations" : selectedCategory) : (selectedCategory === "All" ? "Discover All Doodles" : selectedCategory)}
-          {(selectedView === 'icons' && loadingIcons) || (selectedView === 'illustrations' && loadingIllustrations) || (selectedView === 'doodles' && loadingDoodles) ? <Loader className="inline-block w-4 h-4 animate-spin ml-2 text-muted-foreground" /> : null}
+          {selectedView === 'icons' ? (selectedCategory === "All" ? "Icons" : selectedCategory) : selectedView === 'illustrations' ? (selectedCategory === "All" ? "Illustrations" : selectedCategory) : selectedView === 'biology' ? (selectedCategory === "All" ? "Biology" : selectedCategory) : (selectedCategory === "All" ? "Discover All Doodles" : selectedCategory)}
+          {(selectedView === 'icons' && loadingIcons) || (selectedView === 'illustrations' && loadingIllustrations) || (selectedView === 'doodles' && loadingDoodles) || (selectedView === 'biology' && loadingBiology) ? <Loader className="inline-block w-4 h-4 animate-spin ml-2 text-muted-foreground" /> : null}
         </h2>
         <p className="text-muted-foreground">
-          Free, editable SVGs to spice up your designs. Showing {visibleCount} of {totalCount} {selectedView === 'icons' ? "icons" : selectedView === 'illustrations' ? "illustrations" : "doodles"}.
+          Free, editable SVGs to spice up your designs. Showing {visibleCount} of {totalCount} {selectedView === 'icons' ? "icons" : selectedView === 'illustrations' ? "illustrations" : selectedView === 'biology' ? "biology assets" : "doodles"}.
         </p>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 w-full md:w-auto justify-end">
         <button
           onClick={() => setViewMode("grid")}
           className={`p-2 rounded-md transition-colors ${viewMode === "grid" ? "bg-secondary text-secondary-foreground" : "hover:bg-muted"}`}
