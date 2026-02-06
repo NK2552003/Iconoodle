@@ -6,7 +6,8 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "eslint .",
-    "start": "next start"
+    "start": "next start",
+    "generate-json": "node scripts/generate-json.js"
   },
   "dependencies": {
     "autoprefixer": "^10.4.20",

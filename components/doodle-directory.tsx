@@ -193,8 +193,7 @@ export function DoodleDirectory() {
         iconTopCategories={iconTopCategories}
         illustrationCategories={illustrationCategories}
         categories={categories}
-        loadDoodleCategory={loadDoodleCategory}
-      />
+        loadDoodleCategory={loadDoodleCategory} iconCategories={[]}      />
 
       <div className="flex-1 flex flex-col md:flex-row md:overflow-hidden">
 

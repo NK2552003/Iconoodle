@@ -18,7 +18,8 @@ import publicFluentIcons from '@/lib/public-fluent-icons.json'
 import candyIconsJson from '@/lib/candy-icons.json'
 import carsIcons from '@/lib/cars-icons.json'
 import naturalStampingElements from '@/lib/natural-stamping-elements.json'
-
+import { ILLUSTRATIONS as STATIC_ILLUSTRATIONS } from '@/lib/data'
+import christmasIcons from '@/lib/christmas.json'
 export function useDoodles(): {
   doodles: Doodle[]
   allDoodles: Doodle[]
@@ -240,7 +241,7 @@ export function useDoodles(): {
   // Keep variant-level categories available if needed
   const iconCategories = React.useMemo(() => Array.from(new Set(allIcons.map((i) => i.category))).sort(), [allIcons])
 
-  const illustrationCategories = React.useMemo(() => Array.from(new Set(illustrations.map((i) => i.category))).sort(), [illustrations])
+  const illustrationCategories = React.useMemo(() => Array.from(new Set([...(STATIC_ILLUSTRATIONS || []).map((i) => i.category), ...illustrations.map((i) => i.category)])).sort(), [illustrations])
 
   // Load all icon sources + candy icons (on-demand)
   const loadIcons = React.useCallback(async () => {
@@ -252,6 +253,7 @@ export function useDoodles(): {
       // The static imports above guarantee these are available at build time in most bundlers.
       // Wrap each in a try/catch to be defensive in case one file isn't present in the bundle.
       try { sources.push({ items: (iconsJson as any) as GroupedIcon[], source: 'icons' }) } catch (e) { console.error('[useDoodles] icons.json missing', e) }
+      try { sources.push({ items: (christmasIcons as any) as GroupedIcon[], source: 'christmasIcons' }) } catch (e) { console.error('[useDoodles] christmas.json missing', e) }
       try { sources.push({ items: (handdrawnIcons as any) as GroupedIcon[], source: 'handdrawn-icons' }) } catch (e) { console.error('[useDoodles] handdrawn-icons.json missing', e) }
       try { sources.push({ items: (handdrawnType2Icons as any) as GroupedIcon[], source: 'handdrawn-type-2-icons' }) } catch (e) { console.error('[useDoodles] handdrawn-type-2-icons.json missing', e) }
       try { sources.push({ items: (handmadeDoodledIcons as any) as GroupedIcon[], source: 'handmade-doodled-icons' }) } catch (e) { console.error('[useDoodles] handmade-doodled-icons.json missing', e) }
@@ -276,7 +278,7 @@ export function useDoodles(): {
 
       const merged = mergeGroupedSources(sources)
       setGroupedIcons(merged)
-      setAllIcons(merged.flatMap((g) => Object.entries(g.variants).map(([style, v]) => ({ id: g.id, category: v.category, style, src: v.src, svg: v.svg, viewBox: v.viewBox }))))
+      setAllIcons(merged.flatMap((g) => Object.entries(g.variants).map(([style, v]) => ({ id: g.id, category: g.category ?? v.category, style, src: v.src, svg: v.svg, viewBox: v.viewBox }))))
 
       // candy icons from static import
       try {
@@ -302,7 +304,35 @@ export function useDoodles(): {
     try {
       const mod = await import('@/lib/data')
       const arr = (mod?.ILLUSTRATIONS || []) as Doodle[]
-      setIllustrations(Array.isArray(arr) ? arr : [])
+
+      // If some items still carry a generic 'Illustration' category (from the JSON),
+      // attempt to infer a file-level category from `src` or `id` so sidebar shows meaningful groups.
+      const inferCategory = (it: Doodle) => {
+        const s = ((it?.src || '') + ' ' + (it?.id || '')).toLowerCase()
+        const map: Array<{ patterns: string[]; cat: string }> = [
+          { patterns: ['christmas'], cat: 'illustrations-christmas-2' },
+          { patterns: ['valenti'], cat: 'valentines-illustration' },
+          { patterns: ['racing'], cat: 'racing-illustrations' },
+          { patterns: ['funny', 'character'], cat: 'funny-character-illustrations' },
+          { patterns: ['sports-women', 'women', 'sports'], cat: 'illustrations-sports' },
+          { patterns: ['trees'], cat: 'illustrations-trees' },
+          { patterns: ['pet', 'pet-ill', 'pet_ill'], cat: 'illustrations-pet-ill' },
+          { patterns: ['lineart'], cat: 'illustrations-lineart' },
+        ]
+        for (const { patterns, cat } of map) {
+          if (patterns.some((p) => s.includes(p))) return cat
+        }
+        return 'illustrations'
+      }
+
+      const normalized = Array.isArray(arr)
+        ? arr.map((i) => ({
+            ...(i || {}),
+            category: (i?.category && i.category !== 'Illustration') ? i.category : inferCategory(i),
+          }))
+        : []
+
+      setIllustrations(normalized)
       setLoadedIllustrations(true)
     } finally {
       setLoadingIllustrations(false)

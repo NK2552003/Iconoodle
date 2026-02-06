@@ -44,7 +44,14 @@ import candyIcons from './candy-icons.json'
 import handdrawnIcons from './handdrawn-icons.json'
 import handdrawnType2Icons from './handdrawn-type-2-icons.json'
 import handmadeDoodledIcons from './handmade-doodled-icons.json'
-import illustrations from './illustrations.json' 
+import christmas from './christmas.json'
+import illustrations from './illustrations.json'
+import illustrationsSports from './illustrations-sports.json'
+import illustrationsSportsWomen from './illustrations-sports-women.json'
+import illustrationsTrees from './illustrations-trees.json'
+import illustrationsPetIll from './illustrations-pet-ill.json'
+import illustrationsLineart from './illustrations-lineart.json'
+import illustrationsChristmas from './christmas-illustration-2.json'
 import publicCoolicons from './public-coolicons.json'
 import publicIconly from './public-iconly.json'
 import publicSmooothIcons from './public-smoooth-icons.json'
@@ -95,6 +102,7 @@ export const DOODLES: Doodle[] = [
 // Merge groups by `id` so variants from different sources combine under the same grouped icon
 const sources: Array<{ items: GroupedIcon[]; source: string }> = [
   { items: (groupedIcons as unknown) as GroupedIcon[], source: 'icons' },
+  { items: (christmas as unknown) as GroupedIcon[], source: 'christmas' },
   { items: ((handdrawnIcons as unknown) as GroupedIcon[]), source: 'handdrawn' },
   { items: ((handdrawnType2Icons as unknown) as GroupedIcon[]), source: 'handdrawn-type-2' },
   { items: ((handmadeDoodledIcons as unknown) as GroupedIcon[]), source: 'handmade-doodled' },
@@ -143,7 +151,7 @@ for (const { items, source } of sources) {
 export const GROUPED_ICONS: GroupedIcon[] = Array.from(merged.values())
 
 export const ICONS: Doodle[] = GROUPED_ICONS.flatMap((g) =>
-  Object.entries(g.variants).map(([style, v]) => ({ id: g.id, category: v.category, style, src: v.src, svg: v.svg, viewBox: v.viewBox })),
+  Object.entries(g.variants).map(([style, v]) => ({ id: g.id, category: g.category ?? v.category, style, src: v.src, svg: v.svg, viewBox: v.viewBox })),
 )
 
 // Candy Icons (flat list) — used as a separate icon set
@@ -163,11 +171,22 @@ const _toDoodleArray = (arr: any[] | undefined, defaultCat?: string) => {
       viewBox: v.viewBox ?? '',
     }))) as Doodle[]
   }
-  return arr as Doodle[]
+  // For flat arrays, ensure items get a meaningful category. If an item has a generic
+  // 'Illustration' category or no category, use the file-level default category instead.
+  return (arr as any[]).map((d: any) => ({
+    ...(d || {}),
+    category: (d?.category && d.category !== 'Illustration') ? d.category : (defaultCat ?? d?.category ?? ''),
+  })) as Doodle[]
 }
 
 export const ILLUSTRATIONS: Doodle[] = [
   ..._toDoodleArray((illustrations as unknown) as any[],'illustrations'),
+  ..._toDoodleArray((illustrationsChristmas as unknown) as any[],'illustrations-christmas-2'),
+  ..._toDoodleArray((illustrationsSports as unknown) as any[],'illustrations-sports'),
+  ..._toDoodleArray((illustrationsSportsWomen as unknown) as any[],'illustrations-sports-women'),
+  ..._toDoodleArray((illustrationsTrees as unknown) as any[],'illustrations-trees'),
+  ..._toDoodleArray((illustrationsPetIll as unknown) as any[],'illustrations-pet-ill'),
+  ..._toDoodleArray((illustrationsLineart as unknown) as any[],'illustrations-lineart'),
   ..._toDoodleArray((christmasIllustration as unknown) as any[],'christmas-illustration'),
   ..._toDoodleArray((funnyCharacterIllustrations as unknown) as any[],'funny-character-illustrations'),
   ..._toDoodleArray((racingIllustrations as unknown) as any[],'racing-illustrations'),
