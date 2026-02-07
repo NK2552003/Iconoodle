@@ -107,7 +107,7 @@ export function DoodleCard({ doodle, allDoodles, viewMode, onClick, isCandy }: D
       {/* Main Content Area - Full card clickable */}
       <div
         onClick={onClick}
-        className={`flex items-center justify-center cursor-pointer relative ${isGrid ? "w-full h-full p-8" : "w-16 h-16 shrink-0"}`}
+        className={`flex items-center justify-center cursor-pointer relative ${isGrid ? "w-full h-full p-4 md:p-8" : "w-16 h-16 shrink-0"}`}
       >
         {/* Doodle Preview Container */}
         <div className={`w-full h-full flex items-center justify-center transition-all duration-300 group-hover:scale-105 overflow-auto no-scrollbar svg-fit ${(isWhite || isCandy) ? 'p-4 rounded-xl bg-black' : ''}`}>
