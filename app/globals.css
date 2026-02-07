@@ -206,6 +206,15 @@ html, body, :root {
     max-width: none;
     max-height: none;
   }
+
+  /* Increase SVG size on small screens so centered previews are larger on mobile */
+  @media (max-width: 640px) {
+    .svg-fit svg {
+      width: 90%;
+      height: 90%;
+    }
+  }
+
   /* Make SVGs a little larger in grid view hover */
   .group:hover .svg-fit svg {
     transform: scale(1.06);
