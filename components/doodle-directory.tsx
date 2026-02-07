@@ -247,6 +247,9 @@ export function DoodleDirectory() {
       iconsTotal={iconsTotal}
       allIllustrations={allIllustrations}
       biologyTotal={allBiology.length}
+      onPrefetchIcons={loadIcons}
+      onPrefetchIllustrations={loadIllustrations}
+      onPrefetchBiology={() => loadBiologyCategory('human-muscular-system')}
     />
         <main ref={mainRef} className="flex-1 p-6 md:p-8 md:px-8 md:pt-4 scroll-mt-20 md:scroll-mt-16 flex flex-col md:overflow-auto">
 

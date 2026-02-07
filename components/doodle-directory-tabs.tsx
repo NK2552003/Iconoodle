@@ -18,6 +18,9 @@ export function DoodleDirectoryTabs({
   allIllustrations,
   loadingBiology,
   biologyTotal,
+  onPrefetchIcons,
+  onPrefetchIllustrations,
+  onPrefetchBiology,
 }: TabsProps) {
   return (
     <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-3 p-2 md:mt-4 md:mx-2 rounded-xl md:sticky md:top-4 md:z-30 md:backdrop-blur-sm md:border">
@@ -38,6 +41,7 @@ export function DoodleDirectoryTabs({
       </button>
       <button
         onClick={() => { setSelectedCategory("All"); setSelectedView('icons') }}
+        onMouseEnter={onPrefetchIcons}
         className={`w-full text-center px-3 py-2 rounded-lg text-sm transition-colors flex flex-col items-center gap-1 border border-border/50 ${
           selectedView === 'icons' ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 hover:bg-muted/20"
         }`}
@@ -53,6 +57,7 @@ export function DoodleDirectoryTabs({
       </button>
       <button
         onClick={() => { setSelectedCategory("All"); setSelectedView('illustrations') }}
+        onMouseEnter={onPrefetchIllustrations}
         className={`w-full text-center px-3 py-2 rounded-lg text-sm transition-colors flex flex-col items-center gap-1 border border-border/50 ${
           selectedView === 'illustrations' ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 hover:bg-muted/20"
         }`}
@@ -69,6 +74,7 @@ export function DoodleDirectoryTabs({
 
       <button
         onClick={() => { setSelectedCategory("All"); setSelectedView('biology') }}
+        onMouseEnter={onPrefetchBiology}
         className={`w-full text-center px-3 py-2 rounded-lg text-sm transition-colors flex flex-col items-center gap-1 border border-border/50 ${
           selectedView === 'biology' ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 hover:bg-muted/20"
         }`}

@@ -78,6 +78,10 @@ export interface TabsProps {
   iconsTotal: number
   allIllustrations: Doodle[]
   biologyTotal: number
+  // Prefetch functions for hover-based data loading
+  onPrefetchIcons?: () => void
+  onPrefetchIllustrations?: () => void
+  onPrefetchBiology?: () => void
 }
 
 /**
