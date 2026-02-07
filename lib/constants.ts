@@ -75,3 +75,8 @@ export const SCROLL_DEBOUNCE_MS = 100
 export const SEARCH_DEBOUNCE_MS = 250
 export const INTERSECTION_ROOT_MARGIN = "200px"
 export const INTERSECTION_THRESHOLD = 0.1
+
+/**
+ * Default categories for prefetching
+ */
+export const DEFAULT_BIOLOGY_PREFETCH_CATEGORY = 'human-muscular-system'

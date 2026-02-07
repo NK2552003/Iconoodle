@@ -11,7 +11,7 @@ import { DoodleDirectoryTabs } from "@/components/doodle-directory-tabs"
 import { useDoodles } from "@/hooks/use-doodles"
 import { useFilteredView, useFilteredIcons } from "@/hooks/use-filtered-view"
 import type { Doodle } from "@/lib/data"
-import { PAGE_SIZE } from "@/lib/constants"
+import { PAGE_SIZE, DEFAULT_BIOLOGY_PREFETCH_CATEGORY } from "@/lib/constants"
 
 export function DoodleDirectory() {
   const { doodles, allDoodles, categories, doodleSubcategories, loading, icons, allIcons, groupedIcons, iconTopCategories, candyIcons, candyCategories, illustrations, allIllustrations, illustrationCategories, biology, allBiology, biologyCategories, loadDoodleCategory, loadNextDoodleCategory, loadBiologyCategory, loadNextBiologyCategory, hasMoreAll, hasMoreBiology, loadingDoodles, loadIcons, loadingIcons, loadIllustrations, loadingIllustrations, loadingBiology } = useDoodles()
@@ -96,8 +96,8 @@ export function DoodleDirectory() {
       loadIllustrations()
     }
     if (selectedView === 'biology') {
-      // load a biology file: prefer selected category if present, otherwise a first biology category
-      let nameToLoad = 'human-muscular-system'
+      // load a biology file: prefer selected category if present, otherwise use default
+      let nameToLoad = DEFAULT_BIOLOGY_PREFETCH_CATEGORY
       if (selectedCategory !== 'All') {
         if (biologyCategories.includes(selectedCategory)) {
           nameToLoad = selectedCategory
@@ -249,7 +249,7 @@ export function DoodleDirectory() {
       biologyTotal={allBiology.length}
       onPrefetchIcons={loadIcons}
       onPrefetchIllustrations={loadIllustrations}
-      onPrefetchBiology={() => loadBiologyCategory('human-muscular-system')}
+      onPrefetchBiology={() => loadBiologyCategory(DEFAULT_BIOLOGY_PREFETCH_CATEGORY)}
     />
         <main ref={mainRef} className="flex-1 p-6 md:p-8 md:px-8 md:pt-4 scroll-mt-20 md:scroll-mt-16 flex flex-col md:overflow-auto">
 
