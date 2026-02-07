@@ -1,11 +1,11 @@
 "use client"
 
 import * as React from "react"
-import { Search, Loader } from "lucide-react"
+import { Loader } from "lucide-react"
 import type { Doodle } from "@/lib/data"
 import type { MobileProps } from "@/lib/types"
 
-export function DoodleDirectoryMobile({
+export const DoodleDirectoryMobile = React.memo(function DoodleDirectoryMobile({
   searchQuery,
   setSearchQuery,
   selectedView,
@@ -33,16 +33,55 @@ export function DoodleDirectoryMobile({
   loadDoodleCategory,
   loadBiologyCategory,
 }: MobileProps) {
+  // Helpers
+  const formatCategory = React.useCallback((cat: string) => {
+    return cat
+      .split("-")
+      .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ")
+  }, [])
+
+  const btnClass = React.useCallback((active: boolean, extra = "") => {
+    return `inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-colors ${
+      active ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 text-foreground hover:bg-muted/20"
+    } ${extra}`
+  }, [])
+
+  // Memoized formatted lists to avoid recomputation on each render
+  const formattedIconTop = React.useMemo(() => iconTopCategories.map((c) => ({ key: c, label: formatCategory(c), raw: c })), [iconTopCategories, formatCategory])
+  const formattedCandy = React.useMemo(() => candyCategories.map((c) => ({ key: c, label: formatCategory(c), raw: c })), [candyCategories, formatCategory])
+  const formattedIllustrations = React.useMemo(() => ["All", ...illustrationCategories].map((c) => ({ key: c, label: formatCategory(c), raw: c })), [illustrationCategories, formatCategory])
+  const formattedBiology = React.useMemo(() => biologyCategories.map((c) => ({ key: c, label: formatCategory(c), raw: c })), [biologyCategories, formatCategory])
+  const formattedDoodles = React.useMemo(() => doodleSubcategories.map((c) => ({ key: c, label: formatCategory(c), raw: c })), [doodleSubcategories, formatCategory])
+  const formattedCategories = React.useMemo(() => categories.filter((c) => c !== 'simple-doodles').map((c) => ({ key: c, label: formatCategory(c), raw: c })), [categories, formatCategory])
+
+  // Stable handlers
+  const select = React.useCallback((category: string, view: 'doodles' | 'icons' | 'illustrations' | 'biology', opts?: { load?: boolean; loadFn?: (c: string) => void }) => {
+    setSelectedCategory(category)
+    setSelectedView(view)
+    if (opts?.load && opts.loadFn) opts.loadFn(category)
+  }, [setSelectedCategory, setSelectedView])
+
+  const toggleCandy = React.useCallback(() => {
+    setCandyOpen((s) => !s)
+    setSelectedCategory("Candy Icons")
+    setSelectedView('icons')
+  }, [setCandyOpen, setSelectedCategory, setSelectedView])
+
+  const toggleSimple = React.useCallback(() => {
+    setSimpleOpen((s) => !s)
+    setSelectedCategory('simple-doodles')
+    setSelectedView('doodles')
+  }, [setSimpleOpen, setSelectedCategory, setSelectedView])
+
   return (
     <div className="md:hidden sticky top-16 z-30 bg-background/95 backdrop-blur border-b">
       <div className="px-4 py-2">
         <div className="overflow-x-auto mb-2">
           <div className="flex gap-2 whitespace-nowrap">
             <button
-              onClick={() => { setSelectedCategory("All"); setSelectedView('doodles') }}
-              className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-colors ${
-                selectedView === 'doodles' ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 text-foreground hover:bg-muted/20"
-              }`}
+              onClick={() => select("All", 'doodles', { load: false })}
+              className={btnClass(selectedView === 'doodles')}
             >
               <div className="font-medium">Doodles</div>
               {loadingDoodles ? (
@@ -51,11 +90,10 @@ export function DoodleDirectoryMobile({
                 <div className="text-xs">3951</div>
               )}
             </button>
+
             <button
-              onClick={() => { setSelectedCategory("All"); setSelectedView('icons') }}
-              className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-colors ${
-                selectedView === 'icons' ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 text-foreground hover:bg-muted/20"
-              }`}
+              onClick={() => select("All", 'icons')}
+              className={btnClass(selectedView === 'icons')}
             >
               <div className="font-medium">Icons</div>
               {loadingIcons ? (
@@ -66,11 +104,10 @@ export function DoodleDirectoryMobile({
                 ) : null
               )}
             </button>
+
             <button
-              onClick={() => { setSelectedCategory("All"); setSelectedView('illustrations') }}
-              className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-colors ${
-                selectedView === 'illustrations' ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 text-foreground hover:bg-muted/20"
-              }`}
+              onClick={() => select("All", 'illustrations')}
+              className={btnClass(selectedView === 'illustrations')}
             >
               <div className="font-medium">Illustrations</div>
               {loadingIllustrations ? (
@@ -81,11 +118,10 @@ export function DoodleDirectoryMobile({
                 ) : null
               )}
             </button>
+
             <button
-              onClick={() => { setSelectedCategory("All"); setSelectedView('biology') }}
-              className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-colors ${
-                selectedView === 'biology' ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 text-foreground hover:bg-muted/20"
-              }`}
+              onClick={() => select("All", 'biology')}
+              className={btnClass(selectedView === 'biology')}
             >
               <div className="font-medium">Biology</div>
               {loadingBiology ? (
@@ -99,74 +135,47 @@ export function DoodleDirectoryMobile({
           </div>
         </div>
 
-        <div className="mb-2">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search doodles..."
-              className="w-full h-10 pl-10 pr-4 rounded-full bg-muted border-none focus:ring-2 focus:ring-primary text-sm"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-        </div>
-
         {selectedView === 'icons' ? (
           <div className="overflow-x-auto">
             <div className="flex gap-2 whitespace-nowrap">
               <>
                 <button
                   key="All"
-                  onClick={() => { setSelectedCategory("All"); setSelectedView('icons') }}
-                  className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-colors ${
-                    selectedCategory === "All" ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 text-foreground hover:bg-muted/20"
-                  }`}
+                  onClick={() => select("All", 'icons')}
+                  className={btnClass(selectedCategory === "All")}
                 >
                   All
                 </button>
 
                 <button
                   key="Candy Icons"
-                  onClick={() => { setCandyOpen((s) => !s); setSelectedCategory("Candy Icons"); setSelectedView('icons') }}
-                  className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-colors ${
-                    selectedCategory === "Candy Icons" ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 text-foreground hover:bg-muted/20"
-                  }`}
+                  onClick={toggleCandy}
+                  className={btnClass(selectedCategory === "Candy Icons")}
                 >
                   Candy Icons
                 </button>
 
                 {candyOpen && (
                   <div className="flex gap-2 whitespace-nowrap">
-                    {candyCategories.map((cat: string) => (
+                    {formattedCandy.map((cat) => (
                       <button
-                        key={`candy-${cat}`}
-                        onClick={() => { setSelectedCategory(cat); setSelectedView('icons') }}
-                        className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-colors pl-3 ${
-                          selectedCategory === cat ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 text-foreground hover:bg-muted/20"
-                        }`}
+                        key={`candy-${cat.key}`}
+                        onClick={() => select(cat.raw, 'icons')}
+                        className={btnClass(selectedCategory === cat.raw, 'pl-3')}
                       >
-                        {cat
-                          .split("-")
-                          .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-                          .join(" ")}
+                        {cat.label}
                       </button>
                     ))}
                   </div>
                 )}
 
-                {iconTopCategories.map((category: string) => (
+                {formattedIconTop.map((category) => (
                   <button
-                    key={category}
-                    onClick={() => { setSelectedCategory(category); setSelectedView('icons') }}
-                    className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-colors ${
-                      selectedCategory === category ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 text-foreground hover:bg-muted/20"
-                    }`}
+                    key={category.key}
+                    onClick={() => select(category.raw, 'icons')}
+                    className={btnClass(selectedCategory === category.raw)}
                   >
-                    {category
-                      .split("-")
-                      .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-                      .join(" ")}
+                    {category.label}
                   </button>
                 ))}
               </>
@@ -175,18 +184,13 @@ export function DoodleDirectoryMobile({
         ) : selectedView === 'illustrations' ? (
           <div className="overflow-x-auto">
             <div className="flex gap-2 whitespace-nowrap">
-              {["All", ...illustrationCategories].map((category: string) => (
+              {formattedIllustrations.map((category) => (
                 <button
-                  key={category}
-                  onClick={() => { setSelectedCategory(category); setSelectedView('illustrations') }}
-                  className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-colors ${
-                    selectedCategory === category ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 text-foreground hover:bg-muted/20"
-                  }`}
+                  key={category.key}
+                  onClick={() => select(category.raw, 'illustrations')}
+                  className={btnClass(selectedCategory === category.raw)}
                 >
-                  {category
-                    .split("-")
-                    .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-                    .join(" ")}
+                  {category.label}
                 </button>
               ))}
             </div>
@@ -196,26 +200,19 @@ export function DoodleDirectoryMobile({
             <div className="flex gap-2 whitespace-nowrap">
               <button
                 key="All"
-                onClick={() => { setSelectedCategory("All"); setSelectedView('biology') }}
-                className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-colors ${
-                  selectedCategory === "All" ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 text-foreground hover:bg-muted/20"
-                }`}
+                onClick={() => select("All", 'biology')}
+                className={btnClass(selectedCategory === "All")}
               >
                 All
               </button>
 
-              {biologyCategories.map((category: string) => (
+              {formattedBiology.map((category) => (
                 <button
-                  key={category}
-                  onClick={() => { setSelectedCategory(category); setSelectedView('biology'); loadBiologyCategory(category) }}
-                  className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-colors ${
-                    selectedCategory === category ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 text-foreground hover:bg-muted/20"
-                  }`}
+                  key={category.key}
+                  onClick={() => select(category.raw, 'biology', { load: true, loadFn: loadBiologyCategory })}
+                  className={btnClass(selectedCategory === category.raw)}
                 >
-                  {category
-                    .split("-")
-                    .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-                    .join(" ")}
+                  {category.label}
                 </button>
               ))}
             </div>
@@ -225,55 +222,41 @@ export function DoodleDirectoryMobile({
             <div className="flex gap-2 whitespace-nowrap">
               <button
                 key="All"
-                onClick={() => { setSelectedCategory("All"); setSelectedView('doodles'); loadDoodleCategory('simple-doodles') }}
-                className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-colors ${
-                  selectedCategory === "All" ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 text-foreground hover:bg-muted/20"
-                }`}
+                onClick={() => select("All", 'doodles', { load: true, loadFn: loadDoodleCategory })}
+                className={btnClass(selectedCategory === "All")}
               >
                 All
               </button>
 
               <button
                 key="simple-doodles"
-                onClick={() => { setSimpleOpen((s) => !s); setSelectedCategory('simple-doodles'); setSelectedView('doodles') }}
-                className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-colors ${
-                  selectedCategory === "simple-doodles" ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 text-foreground hover:bg-muted/20"
-                }`}
+                onClick={toggleSimple}
+                className={btnClass(selectedCategory === "simple-doodles")}
               >
                 Simple Doodles
               </button>
 
               {simpleOpen && (
                 <>
-                  {doodleSubcategories.map((cat: string) => (
+                  {formattedDoodles.map((cat) => (
                     <button
-                      key={`doodle-${cat}`}
-                      onClick={() => { setSelectedCategory(cat); setSelectedView('doodles') }}
-                      className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-colors pl-3 ${
-                        selectedCategory === cat ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 text-foreground hover:bg-muted/20"
-                      }`}
+                      key={`doodle-${cat.key}`}
+                      onClick={() => select(cat.raw, 'doodles')}
+                      className={btnClass(selectedCategory === cat.raw, 'pl-3')}
                     >
-                      {cat
-                        .split("-")
-                        .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-                        .join(" ")}
+                      {cat.label}
                     </button>
                   ))}
                 </>
               )}
 
-              {categories.filter((c) => c !== 'simple-doodles').map((category: string) => (
+              {formattedCategories.map((category) => (
                 <button
-                  key={category}
-                  onClick={() => { setSelectedCategory(category); setSelectedView('doodles'); loadDoodleCategory(category) }}
-                  className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-colors ${
-                    selectedCategory === category ? "bg-primary text-primary-foreground font-medium" : "bg-muted/10 text-foreground hover:bg-muted/20"
-                  }`}
+                  key={category.key}
+                  onClick={() => select(category.raw, 'doodles', { load: true, loadFn: loadDoodleCategory })}
+                  className={btnClass(selectedCategory === category.raw)}
                 >
-                  {category
-                    .split("-")
-                    .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-                    .join(" ")}
+                  {category.label}
                 </button>
               ))}
             </div>
@@ -282,4 +265,4 @@ export function DoodleDirectoryMobile({
       </div>
     </div>
   )
-}
+})
