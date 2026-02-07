@@ -1,13 +1,12 @@
 {
-  "name": "doodle_project",
-  "version": "0.1.0",
+  "name": "iconoodle",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "build": "next build",
     "dev": "next dev",
     "lint": "eslint .",
-    "start": "next start",
-    "generate-json": "node scripts/generate-json.js"
+    "start": "next start"
   },
   "dependencies": {
     "autoprefixer": "^10.4.20",

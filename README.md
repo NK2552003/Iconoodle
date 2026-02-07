@@ -1,26 +1,15 @@
 
-<div
-   align="center"
-  style="
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-  "
->
-  <img
-    src="https://github.com/NK2552003/Iconoodle/blob/main/public/iconoodle.svg"
-    alt="Iconoodle"
-    width="160"
-  />
+<div align="center">
+  <img src="https://github.com/NK2552003/Iconoodle/blob/main/public/iconoodle.svg" alt="Iconoodle" width="160" />
   <h1 style="margin: 0;">ICONOODLE</h1>
-   <div align="center">
-    <p align="center">Doodles, Illustrations & icons</p>
-    <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
-    <a href="https://github.com/NK2552003/Iconoodle"><img src="https://img.shields.io/github/stars/NK2552003/Iconoodle?style=social" alt="GitHub Stars"></a>
-    <a href="https://github.com/NK2552003/Iconoodle/commits/main"><img src="https://img.shields.io/github/last-commit/NK2552003/Iconoodle.svg" alt="Last Commit"></a><br/><br/>
-</div>
-</div>
+  <p>Doodles, Illustrations & icons</p>
+  <p>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License" /></a>
+    <a href="https://github.com/NK2552003/Iconoodle"><img src="https://img.shields.io/github/stars/NK2552003/Iconoodle?style=social" alt="GitHub Stars" /></a>
+    <a href="https://github.com/NK2552003/Iconoodle/commits/main"><img src="https://img.shields.io/github/last-commit/NK2552003/Iconoodle.svg" alt="Last Commit" /></a>
+    <a href="https://nk2552003.github.io/Iconoodle/"><img src="https://img.shields.io/badge/demo-live-brightgreen.svg" alt="Live Demo" /></a>
+  </p>
+</div> 
 
 **Hey! I’m Nitish — I made this to make doodles easy to find, grab, and sprinkle into your projects.**
 
@@ -28,52 +17,41 @@ This project is a pretty little Next.js site full of hand-drawn-ish doodles and 
 
 ---
 
-## Quick TL;DR (for the short attention span)
-- Clone the repo
-- Run: `npm i && npm run dev`
-- Visit: `http://localhost:3000`
-- To download SVGs instantly: use the built-in download buttons or run the tiny Node export script in `tools/export-svgs.js` (instructions below)
+## Quick start ✅
 
----
-
-## What’s in this repo?
-- `app/` — Next.js app (pages, components)
-- `lib/doodles.json` — All doodles data. Each item has an `svg` string and a `src` path.
-- `lib/*.json` — Icon packs (handdrawn, candy, etc.)
-- `components/` — UI building blocks for the site
-- `public/` — (Optional) static files — may be empty; SVGs are embedded in `lib` JSON for convenience
-
----
-
-## Running locally (the chill guide)
-1. Install dependencies:
+1. Clone the repository
+2. Install dependencies:
 
    ```bash
    npm install
    ```
 
-2. Start dev server:
+3. Start the dev server:
 
    ```bash
    npm run dev
    ```
 
-3. Open your browser: http://localhost:3000
+4. Open locally: `http://localhost:3000`
 
-That’s it! You can edit components in `components/` and doodle data in `lib/doodles.json`.
+5. View the live demo: https://nk2552003.github.io/Iconoodle/
 
 ---
 
-## Downloading doodles & SVGs — fast and silly ways
-There are a few ways to get SVGs:
+## What’s included 🔧
 
-### 1) Via the site (recommended for humans)
-- Browse the site, click the doodle you like, and hit the **Download** button. Instant gratification.
+- `app/` — Next.js application and pages
+- `components/` — Reusable UI components
+- `lib/` — Doodle and icon pack data (`*.json`)
+- `public/` — Static assets
 
-### 2) Programmatically — Node script (recommended for batch downloading)
-I added a tiny script to dump the SVGs to files. Create `tools/export-svgs.js` (or use the one provided) and run it.
+---
 
-Example script (save as `tools/export-svgs.js`):
+## Exporting SVGs (programmatic) ⚡
+
+A small Node script can export all SVGs to disk. Create or use `tools/export-svgs.js` and run `node tools/export-svgs.js`.
+
+Minimal example:
 
 ```js
 const fs = require('fs');
@@ -84,67 +62,27 @@ const outDir = path.resolve(__dirname, '..', 'exports', 'svgs');
 fs.mkdirSync(outDir, { recursive: true });
 
 doodles.forEach((d, i) => {
-  const safeName = d.id.replace(/[^a-z0-9-_]/gi, '-').toLowerCase();
-  const filename = path.join(outDir, `${safeName || 'doodle-' + i}.svg`);
-  fs.writeFileSync(filename, d.svg || d.svgString || d.svgContent || d.src);
+  const name = (d.id || `doodle-${i}`).replace(/[^a-z0-9-_]/gi, '-').toLowerCase();
+  fs.writeFileSync(path.join(outDir, `${name}.svg`), d.svg || d.src || '');
 });
 
-console.log('Exported', doodles.length, 'svgs to', outDir);
+console.log(`Exported ${doodles.length} SVGs to ${outDir}`);
 ```
 
-Run:
-
-```bash
-node tools/export-svgs.js
-```
-
-You’ll find the SVGs in `exports/svgs/`. Rename, zip, distribute to beloved coworkers.
-
-> Tip: If the script writes the `src` path instead of raw SVG, check `d.svg` property in `lib/doodles.json` — some entries keep SVG text in `svg` while others only include a `src` URL. Adjust the script to fetch if you need to.
-
-### 3) If you want a single file from the JSON (quick and dirty)
-
-```js
-// get one doodle SVG string and write to file
-const doodles = require('./lib/doodles.json');
-const d = doodles.find(x => x.id === 'Some id');
-require('fs').writeFileSync('single.svg', d.svg);
-```
+> Note: some entries store full SVG content in `svg`, others reference `src` paths or URLs.
 
 ---
 
-## Project vibe & rules (a.k.a. legal but friendly)
-- This project is MIT-licensed. Use it like you stole it legally — credit is appreciated but not required. See `LICENSE`.
-- Want to contribute? Sweet. Read `CONTRIBUTING.md`.
-- Be nice. Follow `CODE_OF_CONDUCT.md`.
+## Contributing & License 📝
+
+- Contributions welcome — see `CONTRIBUTING.md` and follow `CODE_OF_CONDUCT.md`.
+- Licensed under MIT. See `LICENSE`.
 
 ---
 
-## Want to add doodles? (super simple)
-1. Add your SVG object to `lib/doodles.json` with properties: `id`, `category`, `style`, `src`, `svg`, `viewBox`.
-2. Run the dev server and verify it shows up in the UI.
-3. Make a PR with a little comment about your creation (or a dad joke if you must).
+## Questions / Contact ✉️
 
-Pro tip: keep IDs short and spaces-friendly — the export script slugs them.
-
----
-
-## FAQs (short and helpful)
-- Q: Can I use these in commercial projects?
-  - A: Yes. MIT license. See `LICENSE` for details.
-- Q: Where are the source files?
-  - A: Doodles are stored in `lib/doodles.json`; many items include full inline `svg` content for instant use.
-- Q: How do I suggest a new icon pack?
-  - A: Open an issue or PR. Use the `CONTRIBUTING.md` template.
-
----
-
-## Contact / Kudos / Shoutouts
-Made with caffeine and curiosity by Me. If you make something cool with the doodles, drop a link in Issues — I’ll probably freak out in the best way.
-
----
-
-## Want more docs? There’s a `WIKI` with architecture notes, and full guidance on how to download / bulk-export / contribute. Happy doodling!
+If you build something with these doodles or want to contribute, open an issue or PR — I’d love to see it.
 
 ---
 
