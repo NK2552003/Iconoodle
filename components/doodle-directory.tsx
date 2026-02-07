@@ -9,7 +9,9 @@ import { DoodleDirectoryGrid } from "@/components/doodle-directory-grid"
 import { DoodleDirectoryEmpty } from "@/components/doodle-directory-empty"
 import { DoodleDirectoryTabs } from "@/components/doodle-directory-tabs"
 import { useDoodles } from "@/hooks/use-doodles"
+import { useFilteredView, useFilteredIcons } from "@/hooks/use-filtered-view"
 import type { Doodle } from "@/lib/data"
+import { PAGE_SIZE } from "@/lib/constants"
 
 export function DoodleDirectory() {
   const { doodles, allDoodles, categories, doodleSubcategories, loading, icons, allIcons, groupedIcons, iconTopCategories, candyIcons, candyCategories, illustrations, allIllustrations, illustrationCategories, biology, allBiology, biologyCategories, loadDoodleCategory, loadNextDoodleCategory, loadBiologyCategory, loadNextBiologyCategory, hasMoreAll, hasMoreBiology, loadingDoodles, loadIcons, loadingIcons, loadIllustrations, loadingIllustrations, loadingBiology } = useDoodles()
@@ -23,67 +25,15 @@ export function DoodleDirectory() {
   // Count all icon variants + candy icons
   const iconsTotal = React.useMemo(() => allIcons.length + candyIcons.length, [allIcons, candyIcons])
 
-  const filteredDoodles = React.useMemo(() => {
-    return doodles.filter((doodle: Doodle) => {
-      const matchesSearch =
-        doodle.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (doodle.category || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (doodle.subcategory || "").toLowerCase().includes(searchQuery.toLowerCase())
-      const matchesCategory = selectedCategory === "All" || doodle.category === selectedCategory || doodle.subcategory === selectedCategory
-      return matchesSearch && matchesCategory
-    })
-  }, [doodles, searchQuery, selectedCategory])
-
-  const filteredIcons = React.useMemo(() => {
-    if (selectedView !== 'icons') return []
-    const term = searchQuery.toLowerCase()
-    const matches = (item: any) => item.id.toLowerCase().includes(term) || (item.category || '').toLowerCase().includes(term)
-
-    // Candy Icons parent: show all candy icons (and support their subcategories)
-    if (selectedCategory === 'Candy Icons') {
-      return candyIcons.filter((c: any) => matches(c))
-    }
-
-    // When All is selected, show a representative list (one-per-group) + candy
-    if (selectedCategory === 'All') {
-      return [...icons, ...candyIcons].filter((i: any) => matches(i))
-    }
-
-    // If a top-level icon group is selected, show one representative per grouped icon (not all variants)
-    if (iconTopCategories.includes(selectedCategory)) {
-      const representatives = (icons as any).filter((i: any) => i.category === selectedCategory)
-      // include any candy icons that have the same category name
-      const candyMatches = candyIcons.filter((c: any) => c.category === selectedCategory)
-      return [...representatives, ...candyMatches].filter((i: any) => matches(i))
-    }
-
-    // Otherwise treat selectedCategory as a variant-level category (e.g., 'black', 'color', or candy subcategory)
-    const allIconItems = [...allIcons, ...candyIcons]
-    return allIconItems.filter((icon: any) => matches(icon) && (selectedCategory === 'All' || icon.category === selectedCategory))
-  }, [icons, candyIcons, searchQuery, selectedCategory, selectedView, groupedIcons, allIcons, iconTopCategories])
-
-  const filteredIllustrations = React.useMemo(() => {
-    return illustrations.filter((ill: Doodle) => {
-      const matchesSearch =
-        ill.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (ill.category || '').toLowerCase().includes(searchQuery.toLowerCase())
-      const matchesCategory = selectedCategory === "All" || ill.category === selectedCategory
-      return matchesSearch && matchesCategory
-    })
-  }, [illustrations, searchQuery, selectedCategory])
-
-  const filteredBiology = React.useMemo(() => {
-    return allBiology.filter((b: Doodle) => {
-      const matchesSearch =
-        b.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (b.category || '').toLowerCase().includes(searchQuery.toLowerCase())
-      const matchesCategory = selectedCategory === "All" || b.category === selectedCategory
-      return matchesSearch && matchesCategory
-    })
-  }, [allBiology, searchQuery, selectedCategory])
+  // Use optimized filtering hooks with debouncing
+  const filterOptions = { searchQuery, selectedCategory, selectedView }
+  
+  const filteredDoodles = useFilteredView(doodles, filterOptions)
+  const filteredIcons = useFilteredIcons(icons, allIcons, candyIcons, iconTopCategories, filterOptions)
+  const filteredIllustrations = useFilteredView(illustrations, filterOptions)
+  const filteredBiology = useFilteredView(allBiology, filterOptions)
 
   // Pagination / Infinite Scroll
-  const PAGE_SIZE = 20
   const [visibleCount, setVisibleCount] = React.useState(PAGE_SIZE)
   const [isFetchingMore, setIsFetchingMore] = React.useState(false)
   const sentinelRef = React.useRef<HTMLDivElement | null>(null)
@@ -205,11 +155,11 @@ export function DoodleDirectory() {
             if (selectedView === 'biology' && hasMoreBiology) {
               loadNextBiologyCategory()
             }
-            // emulate async fetch
+            // emulate async fetch with reduced delay for better responsiveness
             setTimeout(() => {
               setVisibleCount((v) => Math.min(v + PAGE_SIZE, currentTotal))
               setIsFetchingMore(false)
-            }, 300)
+            }, 100)
           }
         })
       },
