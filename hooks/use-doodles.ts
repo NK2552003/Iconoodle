@@ -5,9 +5,25 @@ import type { Doodle, GroupedIcon } from "@/lib/data"
 import type { IconVariant } from "@/lib/data"
 import { useBiologyData } from "./use-biology-data"
 
-// Icon sources will be dynamically imported in `loadIcons` to keep the initial
-// JavaScript bundle small and improve first-load performance on mobile devices.
-// (Previously these were imported statically which increased initial bundle size.)
+/**
+ * Main hook for managing all asset types (doodles, icons, illustrations, biology).
+ * Implements on-demand loading strategy to optimize initial bundle size and improve
+ * first-load performance on mobile devices.
+ * 
+ * **Loading Strategy:**
+ * - Doodles: Loaded per-category on demand (concurrent loading supported)
+ * - Icons: Loaded on-demand when Icons tab is accessed (multiple sources merged)
+ * - Illustrations: Loaded on-demand when Illustrations tab is accessed
+ * - Biology: Managed by dedicated useBiologyData hook with parallel loading support
+ * 
+ * **Performance Features:**
+ * - Dynamic imports prevent bundling large JSON files
+ * - Concurrent category loading for better UX
+ * - Memoized derived data (categories, styles, subcategories)
+ * - Grouped icon variant merging to avoid duplicates
+ * 
+ * @returns Object containing all assets, categories, loading states, and load functions
+ */
 export function useDoodles(): {
   doodles: Doodle[]
   allDoodles: Doodle[]
@@ -94,7 +110,17 @@ export function useDoodles(): {
     loadNextBiologyCategory,
   } = useBiologyData()
 
-  // Load a single doodle category on demand
+  /**
+   * Load a single doodle category on demand using dynamic imports.
+   * Supports concurrent loading - multiple categories can load simultaneously.
+   * 
+   * **Processing Logic:**
+   * - Normalizes data structure (handles variant-based and flat formats)
+   * - Forces top-level category to file name for consistent filtering
+   * - Flattens grouped icons with variants into individual Doodle entries
+   * 
+   * @param name - Category name to load (must match a file name in FILES)
+   */
   const loadDoodleCategory = React.useCallback(async (name: string) => {
     if (loadedDoodleMap.has(name) || loadingDoodleCategories.has(name)) return
     // mark this category as loading (allow other categories to load concurrently)
@@ -188,7 +214,18 @@ export function useDoodles(): {
   const [loadingIllustrations, setLoadingIllustrations] = React.useState(false)
   const [loadedIllustrations, setLoadedIllustrations] = React.useState(false)
 
-  // Helper: merge grouped icon sources (preserve existing variant merging behavior)
+  /**
+   * Merge multiple grouped icon sources while handling variant name conflicts.
+   * When the same variant name exists across sources, renames with source identifier.
+   * 
+   * **Merging Strategy:**
+   * - Groups icons by ID across all sources
+   * - Preserves all unique variants
+   * - Renames conflicting variants: `variant_sourceName` or `variant_sourceName_N`
+   * 
+   * @param sources - Array of icon sources with their identifiers
+   * @returns Merged array of grouped icons with all variants
+   */
   const mergeGroupedSources = (sources: Array<{ items: GroupedIcon[]; source: string }>) => {
     const merged = new Map<string, GroupedIcon>()
     for (const { items, source } of sources) {
@@ -250,7 +287,23 @@ export function useDoodles(): {
 
   const illustrationCategories = React.useMemo(() => Array.from(new Set([...illustrations.map((i: Doodle) => i.category)])).sort(), [illustrations])
 
-  // Load all icon sources + candy icons (on-demand)
+  /**
+   * Load all icon sources on demand (triggered when Icons tab is accessed).
+   * Dynamically imports multiple JSON files to avoid bundling in main JS.
+   * 
+   * **Sources Loaded:**
+   * - Core icons, Christmas icons, various handdrawn styles
+   * - Public icon sets (coolicons, iconly, smoooth, fluent)
+   * - Social media icons, car icons, natural elements
+   * - Candy icons (separate flat structure)
+   * 
+   * **Performance:**
+   * - All sources load in parallel using Promise.all
+   * - Error handling per source (continues if one fails)
+   * - Single loading state for entire icon set
+   * 
+   * @returns Promise that resolves when all icon sources are loaded
+   */
   const loadIcons = React.useCallback(async () => {
     if (loadingIcons || groupedIcons.length > 0 || allIcons.length > 0) return
     setLoadingIcons(true)
@@ -370,7 +423,21 @@ export function useDoodles(): {
     }
   }, [loadingIcons, groupedIcons.length, allIcons.length])
 
-  // Load illustrations on demand
+  /**
+   * Load illustrations on demand (triggered when Illustrations tab is accessed).
+   * Includes category inference logic to organize illustrations into meaningful groups.
+   * 
+   * **Category Inference:**
+   * - Analyzes src and id fields to determine category
+   * - Maps patterns like 'christmas', 'valentine', 'racing', etc.
+   * - Falls back to generic 'illustrations' category if no pattern matches
+   * 
+   * **Data Source:**
+   * - Imports from @/lib/data (ILLUSTRATIONS export)
+   * - Single load per session (cached after first load)
+   * 
+   * @returns Promise that resolves when illustrations are loaded
+   */
   const loadIllustrations = React.useCallback(async () => {
     if (loadingIllustrations || loadedIllustrations) return
     setLoadingIllustrations(true)
