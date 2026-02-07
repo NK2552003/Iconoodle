@@ -311,6 +311,8 @@ export function DoodleDirectory() {
             totalCount={filteredItems.length}
             viewMode={viewMode}
             setViewMode={setViewMode}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
           />
 
           <DoodleDirectoryGrid

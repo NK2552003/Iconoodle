@@ -9,7 +9,7 @@ import type { GridProps } from "@/lib/types"
 export function DoodleDirectoryGrid({ showLoadingPlaceholders, visibleItems, isFetchingMore, filteredLength, viewMode, candyIcons, setSelectedDoodle, allDoodlesParent, sentinelRef }: GridProps) {
   if (showLoadingPlaceholders) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+      <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2 md:gap-4">
         {[...Array(12)].map((_, i) => (
           <div key={i} className="aspect-square bg-muted animate-pulse rounded-xl" />
         ))}

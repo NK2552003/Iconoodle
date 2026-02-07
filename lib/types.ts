@@ -94,6 +94,9 @@ export interface HeaderProps {
   totalCount: number
   viewMode: "grid" | "list"
   setViewMode: (m: "grid" | "list") => void
+  // Mobile search control
+  searchQuery: string
+  setSearchQuery: (v: string) => void
 }
 
 /**
