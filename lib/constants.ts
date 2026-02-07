@@ -66,3 +66,17 @@ export const SIZE_OPTIONS = [
  * Preferred order for variant styles
  */
 export const VARIANT_STYLE_ORDER = ["LINED", "COLORED", "WHITE", "ICON", "BLACK"] as const
+
+/**
+ * Pagination and performance constants
+ */
+export const PAGE_SIZE = 20
+export const SCROLL_DEBOUNCE_MS = 100
+export const SEARCH_DEBOUNCE_MS = 250
+export const INTERSECTION_ROOT_MARGIN = "200px"
+export const INTERSECTION_THRESHOLD = 0.1
+
+/**
+ * Default categories for prefetching
+ */
+export const DEFAULT_BIOLOGY_PREFETCH_CATEGORY = 'human-muscular-system'
